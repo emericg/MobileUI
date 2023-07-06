@@ -1,12 +1,14 @@
 # MobileUI
 
-MobileUI allows mobile QML applications to interacts with Mobile specific features, like Android and iOS `status bar` and Android `navigation bar`.
+MobileUI allows QML applications to interact with Mobile specific features, like Android and iOS `status bar` and Android `navigation bar`.
+
+You can see it in action in the [MobileUI demo](https://github.com/emericg/MobileUI_demo).
 
 > Supports Qt6 and Qt5.
 
-> Supports iOS 11 and up.
+> Supports iOS 11 and up (tested with iOS 16).
 
-> Supports Android API 21 and up.
+> Supports Android API 21 and up (tested with API 33).
 
 > Works with QMake and CMake.
 
