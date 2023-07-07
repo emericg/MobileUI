@@ -65,11 +65,6 @@
 
 /* ************************************************************************** */
 
-bool MobileUIPrivate::isAvailable_sys()
-{
-    return true; // Qt6 must be built with Android SDK 23 anyway, enough for everything MobileUI use
-}
-
 [[maybe_unused]] static bool isQColorLight(QColor color)
 {
     double darkness = 1.0 - (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255.0;
@@ -117,6 +112,11 @@ void updatePreferredStatusBarStyle()
 
 /* ************************************************************************** */
 
+bool MobileUIPrivate::isAvailable_sys()
+{
+    return true; // Qt6 must be built with Android SDK 23 anyway, enough for everything MobileUI use
+}
+
 int MobileUIPrivate::getDeviceTheme_sys()
 {
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
@@ -140,7 +140,8 @@ void MobileUIPrivate::setColor_statusbar(const QColor &color)
         window.callMethod<void>("setStatusBarColor", "(I)V", color.rgba());
 
         // auto theme?
-        setTheme_statusbar(static_cast<MobileUI::Theme>(!isQColorLight(color)));
+        MobileUIPrivate::statusbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
+        setTheme_statusbar(MobileUIPrivate::statusbarTheme);
     });
 }
 
@@ -204,7 +205,8 @@ void MobileUIPrivate::setColor_navbar(const QColor &color)
         window.callMethod<void>("setNavigationBarColor", "(I)V", color.rgba());
 
         // auto theme?
-        setTheme_navbar(static_cast<MobileUI::Theme>(!isQColorLight(color)));
+        MobileUIPrivate::navbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
+        setTheme_navbar(MobileUIPrivate::navbarTheme);
     });
 }
 

@@ -65,11 +65,6 @@
 
 /* ************************************************************************** */
 
-bool MobileUIPrivate::isAvailable_sys()
-{
-    return (QtAndroid::androidSdkVersion() >= 21);
-}
-
 [[maybe_unused]] static bool isQColorLight(QColor color)
 {
     double darkness = 1.0 - (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255.0;
@@ -116,6 +111,11 @@ void updatePreferredStatusBarStyle()
 }
 
 /* ************************************************************************** */
+
+bool MobileUIPrivate::isAvailable_sys()
+{
+    return (QtAndroid::androidSdkVersion() >= 21);
+}
 
 int MobileUIPrivate::getDeviceTheme_sys()
 {

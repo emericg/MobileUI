@@ -37,6 +37,12 @@
 @property (nonatomic, assign) UIStatusBarStyle preferredStatusBarStyle;
 @end
 
+[[maybe_unused]] static bool isQColorLight(QColor color)
+{
+    double darkness = 1.0 - (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255.0;
+    return (darkness < 0.2);
+}
+
 UIStatusBarStyle statusBarStyle(MobileUI::Theme theme)
 {
     if (theme == MobileUI::Dark)
@@ -47,28 +53,10 @@ UIStatusBarStyle statusBarStyle(MobileUI::Theme theme)
         return UIStatusBarStyleDefault;
 }
 
-bool MobileUIPrivate::isAvailable_sys()
-{
-    return true;
-}
-
-int MobileUIPrivate::getDeviceTheme_sys()
-{
-    if (@available(iOS 13.0, *))
-    {
-        // TODO
-    }
-
-    return 0;
-}
-
-/* ************************************************************************** */
-
 static void setPreferredStatusBarStyle(UIWindow *window, UIStatusBarStyle style)
 {
     QIOSViewController *viewController = static_cast<QIOSViewController *>([window rootViewController]);
-    if (!viewController || viewController.preferredStatusBarStyle == style)
-        return;
+    if (!viewController || viewController.preferredStatusBarStyle == style) return;
 
     viewController.preferredStatusBarStyle = style;
     [viewController setNeedsStatusBarAppearanceUpdate];
@@ -90,9 +78,28 @@ void togglePreferredStatusBarStyle()
 
 /* ************************************************************************** */
 
+bool MobileUIPrivate::isAvailable_sys()
+{
+    return true;
+}
+
+int MobileUIPrivate::getDeviceTheme_sys()
+{
+    if (@available(iOS 13.0, *))
+    {
+        // TODO
+    }
+
+    return 0;
+}
+
+/* ************************************************************************** */
+
 void MobileUIPrivate::setColor_statusbar(const QColor &color)
 {
-    Q_UNUSED(color)
+    // auto theme?
+    MobileUIPrivate::statusbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
+    setTheme_statusbar(MobileUIPrivate::statusbarTheme);
 }
 
 void MobileUIPrivate::setTheme_statusbar(MobileUI::Theme theme)
@@ -146,7 +153,7 @@ int MobileUIPrivate::getSafeAreaTop()
         UIWindow *window = UIApplication.sharedApplication.windows.firstObject;
         return window.safeAreaInsets.top;
     }
-    
+
     return 0;
 }
 
@@ -157,7 +164,7 @@ int MobileUIPrivate::getSafeAreaLeft()
         UIWindow *window = UIApplication.sharedApplication.windows.firstObject;
         return window.safeAreaInsets.left;
     }
-    
+
     return 0;
 }
 
@@ -168,7 +175,7 @@ int MobileUIPrivate::getSafeAreaRight()
         UIWindow *window = UIApplication.sharedApplication.windows.firstObject;
         return window.safeAreaInsets.right;
     }
-    
+
     return 0;
 }
 
@@ -179,7 +186,7 @@ int MobileUIPrivate::getSafeAreaBottom()
         UIWindow *window = UIApplication.sharedApplication.windows.firstObject;
         return window.safeAreaInsets.bottom;
     }
-    
+
     return 0;
 }
 
