@@ -128,6 +128,11 @@ int MobileUIPrivate::getDeviceTheme_sys()
     return (uiMode == UI_MODE_NIGHT_YES) ? MobileUI::Theme::Dark : MobileUI::Theme::Light;
 }
 
+void MobileUIPrivate::refreshUI_async()
+{
+    // TODO
+}
+
 /* ************************************************************************** */
 
 void MobileUIPrivate::setColor_statusbar(const QColor &color)

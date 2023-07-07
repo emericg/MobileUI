@@ -120,6 +120,11 @@ void MobileUI::refreshUI()
     MobileUIPrivate::setColor_navbar(MobileUIPrivate::navbarColor);
 }
 
+void MobileUI::refreshUI_async()
+{
+    MobileUIPrivate::refreshUI_async();
+}
+
 /* ************************************************************************** */
 
 int MobileUI::getStatusbarHeight()

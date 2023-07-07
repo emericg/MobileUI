@@ -48,6 +48,8 @@ public:
 
     static int getDeviceTheme_sys();
 
+    static void refreshUI_async();
+
     static void setColor_statusbar(const QColor &color);
     static void setTheme_statusbar(MobileUI::Theme theme);
 

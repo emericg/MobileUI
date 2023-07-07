@@ -25,6 +25,7 @@
 
 #include <QGuiApplication>
 #include <QScreen>
+#include <QWindow>
 #include <QTimer>
 
 #include <UIKit/UIKit.h>
@@ -45,12 +46,9 @@
 
 UIStatusBarStyle statusBarStyle(MobileUI::Theme theme)
 {
-    if (theme == MobileUI::Dark)
-        return UIStatusBarStyleLightContent;
-    else if (@available(iOS 13.0, *))
-        return UIStatusBarStyleDarkContent;
-    else
-        return UIStatusBarStyleDefault;
+    if (theme == MobileUI::Dark) return UIStatusBarStyleLightContent;
+    else if (@available(iOS 13.0, *)) return UIStatusBarStyleDarkContent;
+    else return UIStatusBarStyleDefault;
 }
 
 static void setPreferredStatusBarStyle(UIWindow *window, UIStatusBarStyle style)
@@ -69,13 +67,6 @@ void updatePreferredStatusBarStyle()
     if (keyWindow) setPreferredStatusBarStyle(keyWindow, style);
 }
 
-void togglePreferredStatusBarStyle()
-{
-    updatePreferredStatusBarStyle();
-
-    QTimer::singleShot(200, []() { updatePreferredStatusBarStyle(); });
-}
-
 /* ************************************************************************** */
 
 bool MobileUIPrivate::isAvailable_sys()
@@ -91,6 +82,13 @@ int MobileUIPrivate::getDeviceTheme_sys()
     }
 
     return 0;
+}
+
+void MobileUIPrivate::refreshUI_async()
+{
+    QTimer::singleShot(  0, []() { updatePreferredStatusBarStyle(); }); // now
+    QTimer::singleShot( 20, []() { updatePreferredStatusBarStyle(); }); // after a frame
+    QTimer::singleShot(200, []() { updatePreferredStatusBarStyle(); }); // after rotation animation?
 }
 
 /* ************************************************************************** */
@@ -112,9 +110,18 @@ void MobileUIPrivate::setTheme_statusbar(MobileUI::Theme theme)
                          qApp, [](Qt::ApplicationState state) { if (state == Qt::ApplicationActive) updatePreferredStatusBarStyle(); });
 
         QScreen *screen = qApp->primaryScreen();
-        if (screen) {
+        if (screen)
+        {
             QObject::connect(screen, &QScreen::orientationChanged,
-                             qApp, [](Qt::ScreenOrientation) { togglePreferredStatusBarStyle(); });
+                             qApp, [](Qt::ScreenOrientation) { refreshUI_async(); });
+        }
+
+        QWindowList windows =  qApp->allWindows();
+        if (windows.size() && windows.at(0))
+        {
+            QWindow *window = windows.at(0);
+            QObject::connect(window, &QWindow::visibilityChanged,
+                             qApp, [](QWindow::Visibility) { refreshUI_async(); });
         }
 
         MobileUIPrivate::areRefreshSlotsConnected = true;
