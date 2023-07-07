@@ -96,7 +96,6 @@ public:
 
     // Refresh UI statusbar/navigationbar themes/colors
     Q_INVOKABLE static void refreshUI();
-    Q_INVOKABLE static void refreshUI_async();
 
     // Screen safe areas ///////////////////////////////////////////////////////
 

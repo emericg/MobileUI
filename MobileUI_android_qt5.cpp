@@ -25,6 +25,9 @@
 
 #include <QGuiApplication>
 #include <QScreen>
+#include <QWindow>
+#include <QTimer>
+
 #include <QtAndroid>
 
 /* ************************************************************************** */
@@ -130,7 +133,10 @@ int MobileUIPrivate::getDeviceTheme_sys()
 
 void MobileUIPrivate::refreshUI_async()
 {
-    // TODO
+    MobileUIPrivate::setColor_statusbar(MobileUIPrivate::statusbarColor);
+    MobileUIPrivate::setTheme_statusbar(MobileUIPrivate::statusbarTheme);
+    MobileUIPrivate::setColor_navbar(MobileUIPrivate::navbarColor);
+    MobileUIPrivate::setTheme_navbar(MobileUIPrivate::navbarTheme);
 }
 
 /* ************************************************************************** */
@@ -190,9 +196,18 @@ void MobileUIPrivate::setTheme_statusbar(MobileUI::Theme theme)
             if (!MobileUIPrivate::areRefreshSlotsConnected)
             {
                 QScreen *screen = qApp->primaryScreen();
-                if (screen) {
+                if (screen)
+                {
                     QObject::connect(screen, &QScreen::orientationChanged,
                                      qApp, [](Qt::ScreenOrientation) { updatePreferredStatusBarStyle(); });
+                }
+
+                QWindowList windows =  qApp->allWindows();
+                if (windows.size() && windows.at(0))
+                {
+                    QWindow *window = windows.at(0);
+                    QObject::connect(window, &QWindow::visibilityChanged,
+                                     qApp, [](QWindow::Visibility) { refreshUI_async(); });
                 }
 
                 MobileUIPrivate::areRefreshSlotsConnected = true;
