@@ -56,19 +56,6 @@ int MobileUIPrivate::getDeviceTheme_sys()
 {
     if (@available(iOS 13.0, *))
     {
-      //QIOSViewController *viewController = static_cast<QIOSViewController *>([window rootViewController]);
-      //UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-
-        if (keyWindow.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark ){
-            //dark mode
-        }
-        else {
-            //not dark mode
-        }
-
-//  myUIView.traitCollection.userInterfaceStyle == .dark
- // myUIViewController.traitCollection.userInterfaceStyle == .dark
-
         // TODO
     }
 
