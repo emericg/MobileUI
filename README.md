@@ -4,23 +4,21 @@ MobileUI allows QML applications to interact with Mobile specific features, like
 
 You can see it in action in the [MobileUI demo](https://github.com/emericg/MobileUI_demo).
 
-> Supports Qt6 and Qt5.
+> Supports Qt6 and Qt5. QMake and CMake.
 
-> Supports iOS 11 and up (tested with iOS 16).
+> Supports iOS 11 and up (tested with iOS 16 devices).
 
-> Supports Android API 21 and up (tested with API 33).
-
-> Works with QMake and CMake.
+> Supports Android API 21 and up (tested with API 31 devices).
 
 ## Features
 
 - Get Android OS theme
-- Set Android `status bar` and Android `navigation bar` color and theme
-- Set iOS `status bar` color and theme
+- Set Android `status bar` and `navigation bar` color and theme
+- Set iOS `status bar` theme (iOS has no notion of status bar color, and has no navigation bar) 
 - Get device `safe areas` (WIP)
 - Lock screensaver
 - Set screen orientation
-- Trigger device vibration
+- Trigger haptic feedback (vibration)
 
 ## Quick start
 
@@ -71,14 +69,14 @@ import MobileUI
 
 ApplicationWindow {
     MobileUI {
-        statusbarTheme: MobileUI.Light
         statusbarColor: "white"
+        statusbarTheme: MobileUI.Light
         navbarColor: "white"
+        navbarTheme: MobileUI.Light
     }
 }
 ```
 
-There is no navigation bar on iOS obviously, so it won't have any effects there.
 
 ## Licensing
 

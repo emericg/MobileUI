@@ -133,9 +133,7 @@ int MobileUIPrivate::getDeviceTheme_sys()
 
 void MobileUIPrivate::refreshUI_async()
 {
-    MobileUIPrivate::setColor_statusbar(MobileUIPrivate::statusbarColor);
     MobileUIPrivate::setTheme_statusbar(MobileUIPrivate::statusbarTheme);
-    MobileUIPrivate::setColor_navbar(MobileUIPrivate::navbarColor);
     MobileUIPrivate::setTheme_navbar(MobileUIPrivate::navbarTheme);
 }
 

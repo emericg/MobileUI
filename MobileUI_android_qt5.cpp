@@ -29,6 +29,7 @@
 #include <QTimer>
 
 #include <QtAndroid>
+#include <QAndroidJniEnvironment>
 
 /* ************************************************************************** */
 
@@ -105,7 +106,7 @@ static QAndroidJniObject getDisplayCutout()
         return cutout;
     }
 
-    return QJniObject();
+    return QAndroidJniObject();
 }
 
 void updatePreferredStatusBarStyle()
@@ -133,9 +134,7 @@ int MobileUIPrivate::getDeviceTheme_sys()
 
 void MobileUIPrivate::refreshUI_async()
 {
-    MobileUIPrivate::setColor_statusbar(MobileUIPrivate::statusbarColor);
     MobileUIPrivate::setTheme_statusbar(MobileUIPrivate::statusbarTheme);
-    MobileUIPrivate::setColor_navbar(MobileUIPrivate::navbarColor);
     MobileUIPrivate::setTheme_navbar(MobileUIPrivate::navbarTheme);
 }
 
@@ -239,16 +238,57 @@ void MobileUIPrivate::setTheme_navbar(MobileUI::Theme theme)
     if (QtAndroid::androidSdkVersion() < 23) return;
 
     QtAndroid::runOnAndroidThread([=]() {
-        QAndroidJniObject window = getAndroidWindow();
-        QAndroidJniObject view = window.callObjectMethod("getDecorView", "()Landroid/view/View;");
+        if (QtAndroid::androidSdkVersion() < 30)
+        {
+            // Added in API level 23 // Deprecated in API level 30
 
-        int visibility = view.callMethod<int>("getSystemUiVisibility", "()I");
-        if (theme == MobileUI::Theme::Light)
-            visibility |= SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        else
-            visibility &= ~SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            QAndroidJniObject view = getAndroidDecorView();
 
-        view.callMethod<void>("setSystemUiVisibility", "(I)V", visibility);
+            int visibility = view.callMethod<int>("getSystemUiVisibility", "()I");
+            if (theme == MobileUI::Theme::Light)
+                visibility |= SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            else
+                visibility &= ~SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+
+            view.callMethod<void>("setSystemUiVisibility", "(I)V", visibility);
+        }
+        else if (QtAndroid::androidSdkVersion() >= 30)
+        {
+            // Added in API level 30
+
+            QAndroidJniObject window = getAndroidWindow();
+            QAndroidJniObject inset = window.callObjectMethod("getInsetsController",
+                                                              "()Landroid/view/WindowInsetsController;");
+
+            int visibility = inset.callMethod<int>("getSystemBarsAppearance", "()I");
+            if (theme == MobileUI::Theme::Light)
+                visibility |= APPEARANCE_LIGHT_NAVIGATION_BARS;
+            else
+                visibility &= ~APPEARANCE_LIGHT_NAVIGATION_BARS;
+
+            inset.callMethod<void>("setSystemBarsAppearance", "(II)V",
+                                   visibility, APPEARANCE_LIGHT_NAVIGATION_BARS);
+
+            if (!MobileUIPrivate::areRefreshSlotsConnected)
+            {
+                QScreen *screen = qApp->primaryScreen();
+                if (screen)
+                {
+                    QObject::connect(screen, &QScreen::orientationChanged,
+                                     qApp, [](Qt::ScreenOrientation) { updatePreferredStatusBarStyle(); });
+                }
+
+                QWindowList windows =  qApp->allWindows();
+                if (windows.size() && windows.at(0))
+                {
+                    QWindow *window = windows.at(0);
+                    QObject::connect(window, &QWindow::visibilityChanged,
+                                     qApp, [](QWindow::Visibility) { refreshUI_async(); });
+                }
+
+                MobileUIPrivate::areRefreshSlotsConnected = true;
+            }
+        }
     });
 }
 
