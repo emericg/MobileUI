@@ -95,7 +95,7 @@ void MobileUIPrivate::refreshUI_async()
 
 void MobileUIPrivate::setColor_statusbar(const QColor &color)
 {
-    // auto theme?
+    // derive the theme from the color
     MobileUIPrivate::statusbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
     setTheme_statusbar(MobileUIPrivate::statusbarTheme);
 }
@@ -237,7 +237,10 @@ void MobileUIPrivate::lockScreenOrientation(int orientation)
 
 void MobileUIPrivate::vibrate()
 {
-    // TODO
+    UISelectionFeedbackGenerator *generator = [[UISelectionFeedbackGenerator alloc] init];
+    [generator prepare];
+    [generator selectionChanged];
+    generator = nil;
 }
 
 /* ************************************************************************** */
