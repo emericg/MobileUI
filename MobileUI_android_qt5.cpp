@@ -75,7 +75,7 @@
 
 /* ************************************************************************** */
 
-static bool isQColorLight(QColor color)
+static bool isQColorLight(const QColor color)
 {
     double darkness = 1.0 - (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255.0;
     return (darkness < 0.2);
@@ -151,7 +151,7 @@ void MobileUIPrivate::setColor_statusbar(const QColor &color)
     });
 }
 
-void MobileUIPrivate::setTheme_statusbar(MobileUI::Theme theme)
+void MobileUIPrivate::setTheme_statusbar(const MobileUI::Theme theme)
 {
     if (QtAndroid::androidSdkVersion() < 23) return;
 
@@ -243,7 +243,7 @@ void MobileUIPrivate::setColor_navbar(const QColor &color)
     });
 }
 
-void MobileUIPrivate::setTheme_navbar(MobileUI::Theme theme)
+void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 {
     if (QtAndroid::androidSdkVersion() < 23) return;
 
@@ -360,7 +360,7 @@ int MobileUIPrivate::getSafeAreaBottom()
 
 /* ************************************************************************** */
 
-void MobileUIPrivate::setScreenKeepOn(bool on)
+void MobileUIPrivate::setScreenAlwaysOn(const bool on)
 {
     QtAndroid::runOnAndroidThread([=]() {
         QAndroidJniObject window = getAndroidWindow();
@@ -372,7 +372,7 @@ void MobileUIPrivate::setScreenKeepOn(bool on)
     });
 }
 
-void MobileUIPrivate::lockScreenOrientation(int orientation)
+void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
 {
     int value = -1; // SCREEN_ORIENTATION_UNSPECIFIED
 

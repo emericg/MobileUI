@@ -38,7 +38,9 @@ MobileUI::Theme MobileUIPrivate::statusbarTheme = MobileUI::Light;
 QColor MobileUIPrivate::navbarColor;
 MobileUI::Theme MobileUIPrivate::navbarTheme = MobileUI::Light;
 
-bool MobileUIPrivate::isScreenKeepOn = false;
+bool MobileUIPrivate::screenAlwaysOn = false;
+
+MobileUI::ScreenOrientation MobileUIPrivate::screenOrientation = MobileUI::Unlocked;
 
 /* ************************************************************************** */
 
@@ -149,20 +151,26 @@ int MobileUI::getSafeAreaBottom()
 
 /* ************************************************************************** */
 
-bool MobileUI::getScreenKeepOn()
+MobileUI::ScreenOrientation MobileUI::getScreenOrientation()
 {
-    return MobileUIPrivate::isScreenKeepOn;
+    return MobileUIPrivate::screenOrientation;
 }
 
-void MobileUI::setScreenKeepOn(const bool on)
+void MobileUI::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
 {
-    MobileUIPrivate::isScreenKeepOn = on;
-    MobileUIPrivate::setScreenKeepOn(on);
+    MobileUIPrivate::screenOrientation = orientation;
+    MobileUIPrivate::setScreenOrientation(orientation);
 }
 
-void MobileUI::lockScreenOrientation(const MobileUI::ScreenOrientation orientation)
+bool MobileUI::getScreenAlwaysOn()
 {
-    MobileUIPrivate::lockScreenOrientation(orientation);
+    return MobileUIPrivate::screenAlwaysOn;
+}
+
+void MobileUI::setScreenAlwaysOn(const bool value)
+{
+    MobileUIPrivate::screenAlwaysOn = value;
+    MobileUIPrivate::setScreenAlwaysOn(value);
 }
 
 /* ************************************************************************** */

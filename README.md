@@ -141,7 +141,7 @@ Set the navigation bar theme explicitly, MobileUI.Light or MobileUI.Dark.
 
 On Android API 28+, the theme must be set each time the window visibility or orientation changes. This is done automatically.
 
-### OS theme
+### Device theme
 
 > deviceTheme
 
