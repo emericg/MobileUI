@@ -50,16 +50,11 @@ void MobileUI::registerQML()
     qmlRegisterType<MobileUI>("MobileUI", 1, 0, "MobileUI");
 }
 
-bool MobileUI::isAvailable()
-{
-    return MobileUIPrivate::isAvailable_sys();
-}
-
 /* ************************************************************************** */
 
 MobileUI::Theme MobileUI::getDeviceTheme()
 {
-    return static_cast<MobileUI::Theme>(MobileUIPrivate::getDeviceTheme_sys());
+    return static_cast<MobileUI::Theme>(MobileUIPrivate::getDeviceTheme());
 }
 
 /* ************************************************************************** */

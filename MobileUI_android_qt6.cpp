@@ -116,12 +116,7 @@ static QJniObject getDisplayCutout()
 
 /* ************************************************************************** */
 
-bool MobileUIPrivate::isAvailable_sys()
-{
-    return true; // Qt6 must be built with Android SDK 23 anyway
-}
-
-int MobileUIPrivate::getDeviceTheme_sys()
+int MobileUIPrivate::getDeviceTheme()
 {
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
     QJniObject rsc = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");

@@ -44,9 +44,7 @@ public:
 
     static bool isScreenKeepOn;
 
-    static bool isAvailable_sys();
-
-    static int getDeviceTheme_sys();
+    static int getDeviceTheme();
 
     static void refreshUI_async();
 

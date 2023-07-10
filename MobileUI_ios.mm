@@ -38,7 +38,7 @@
 @property (nonatomic, assign) UIStatusBarStyle preferredStatusBarStyle;
 @end
 
-[[maybe_unused]] static bool isQColorLight(QColor color)
+static bool isQColorLight(QColor color)
 {
     double darkness = 1.0 - (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255.0;
     return (darkness < 0.2);
@@ -69,12 +69,7 @@ void updatePreferredStatusBarStyle()
 
 /* ************************************************************************** */
 
-bool MobileUIPrivate::isAvailable_sys()
-{
-    return true;
-}
-
-int MobileUIPrivate::getDeviceTheme_sys()
+int MobileUIPrivate::getDeviceTheme()
 {
     if (@available(iOS 13.0, *))
     {

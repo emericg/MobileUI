@@ -117,12 +117,7 @@ static QAndroidJniObject getDisplayCutout()
 
 /* ************************************************************************** */
 
-bool MobileUIPrivate::isAvailable_sys()
-{
-    return (QtAndroid::androidSdkVersion() >= 21);// Qt5 must be built with Android SDK 21 anyway
-}
-
-int MobileUIPrivate::getDeviceTheme_sys()
+int MobileUIPrivate::getDeviceTheme()
 {
     QAndroidJniObject activity = QtAndroid::androidActivity();
     QAndroidJniObject rsc = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");

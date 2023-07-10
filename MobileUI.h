@@ -34,8 +34,6 @@ class MobileUI : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool available READ isAvailable CONSTANT)
-
     Q_PROPERTY(Theme deviceTheme READ getDeviceTheme NOTIFY devicethemeUpdated)
 
     Q_PROPERTY(QColor statusbarColor READ getStatusbarColor WRITE setStatusbarColor NOTIFY statusbarUpdated)

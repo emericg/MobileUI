@@ -25,12 +25,7 @@
 
 /* ************************************************************************** */
 
-bool MobileUIPrivate::isAvailable_sys()
-{
-    return false;
-}
-
-int MobileUIPrivate::getDeviceTheme_sys()
+int MobileUIPrivate::getDeviceTheme()
 {
     return MobileUI::Theme::Light;
 }
