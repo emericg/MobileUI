@@ -199,8 +199,8 @@ void MobileUIPrivate::setTheme_statusbar(const MobileUI::Theme theme)
                 QWindowList windows =  qApp->allWindows();
                 if (windows.size() && windows.at(0))
                 {
-                    QWindow *window = windows.at(0);
-                    QObject::connect(window, &QWindow::visibilityChanged,
+                    QWindow *window_qt = windows.at(0);
+                    QObject::connect(window_qt, &QWindow::visibilityChanged,
                                      qApp, [](QWindow::Visibility) { refreshUI_async(); });
                 }
 
@@ -226,7 +226,8 @@ void MobileUIPrivate::setColor_navbar(const QColor &color)
 
         if (window_qt && window_qt->flags() & Qt::MaximizeUsingFullscreenGeometryHint)
         {
-            // if we try to set the navbar color while in fullscreen mode, it will mess everything up
+            // if we try to set the FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag while in fullscreen mode, it will mess everything up
+            window_android.callMethod<void>("addFlags", "(I)V", FLAG_TRANSLUCENT_NAVIGATION);
             window_android.callMethod<void>("addFlags", "(I)V", FLAG_TRANSLUCENT_NAVIGATION);
         }
         else
@@ -291,8 +292,8 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
                 QWindowList windows =  qApp->allWindows();
                 if (windows.size() && windows.at(0))
                 {
-                    QWindow *window = windows.at(0);
-                    QObject::connect(window, &QWindow::visibilityChanged,
+                    QWindow *window_qt = windows.at(0);
+                    QObject::connect(window_qt, &QWindow::visibilityChanged,
                                      qApp, [](QWindow::Visibility) { refreshUI_async(); });
                 }
 

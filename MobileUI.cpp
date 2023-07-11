@@ -77,7 +77,7 @@ MobileUI::Theme MobileUI::getStatusbarTheme()
     return MobileUIPrivate::statusbarTheme;
 }
 
-void MobileUI::setStatusbarTheme(const Theme theme)
+void MobileUI::setStatusbarTheme(const MobileUI::Theme theme)
 {
     MobileUIPrivate::statusbarTheme = theme;
     MobileUIPrivate::setTheme_statusbar(theme);
@@ -101,7 +101,7 @@ MobileUI::Theme MobileUI::getNavbarTheme()
     return MobileUIPrivate::navbarTheme;
 }
 
-void MobileUI::setNavbarTheme(const Theme theme)
+void MobileUI::setNavbarTheme(const MobileUI::Theme theme)
 {
     MobileUIPrivate::navbarTheme = theme;
     MobileUIPrivate::setTheme_navbar(theme);
@@ -111,10 +111,10 @@ void MobileUI::setNavbarTheme(const Theme theme)
 
 void MobileUI::refreshUI()
 {
-    MobileUIPrivate::setTheme_statusbar(MobileUIPrivate::statusbarTheme);
     MobileUIPrivate::setColor_statusbar(MobileUIPrivate::statusbarColor);
-    MobileUIPrivate::setTheme_navbar(MobileUIPrivate::navbarTheme);
+    MobileUIPrivate::setTheme_statusbar(MobileUIPrivate::statusbarTheme);
     MobileUIPrivate::setColor_navbar(MobileUIPrivate::navbarColor);
+    MobileUIPrivate::setTheme_navbar(MobileUIPrivate::navbarTheme);
 }
 
 /* ************************************************************************** */
