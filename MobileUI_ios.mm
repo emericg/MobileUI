@@ -232,9 +232,13 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
 void MobileUIPrivate::vibrate()
 {
-    UISelectionFeedbackGenerator *generator = [[UISelectionFeedbackGenerator alloc] init];
-    [generator prepare];
-    [generator selectionChanged];
+    // available impacts: light, medium, heavy, soft, rigid
+    // available notifications: error, success, warning
+
+    // "impact" feedback
+    UIImpactFeedbackGenerator *generator = [[UIImpactFeedbackGenerator alloc] initWithStyle:(UIImpactFeedbackStyleMedium)];
+    //[generator prepare];
+    [generator impactOccurred];
     generator = nil;
 }
 
