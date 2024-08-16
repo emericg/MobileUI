@@ -6,19 +6,21 @@ You can see it in action in the [MobileUI demo](https://github.com/emericg/Mobil
 
 > Supports Qt6 and Qt5. QMake and CMake.
 
-> Supports iOS 11+ (tested up to iOS 17 devices).
+> Supports iOS 11+ (tested up to iOS 17.5 devices).
 
-> Supports Android API 21+ (tested up to API 33 devices).
+> Supports Android API 21+ (tested up to API 34 devices).
 
 ## Features
 
 - Set Android `status bar` and `navigation bar` color and theme
 - Set iOS `status bar` theme (iOS has no notion of status bar color, and has no navigation bar)
 - Get device theme (light or dark mode)
-- Get device `safe areas` (WIP)
+- Get device `safe areas`
 - Lock screensaver
-- Force screen orientation
+- Set screen orientation
+- Set screen brightness
 - Trigger haptic feedback (vibration)
+- Android back button helper
 
 ## Screenshots
 
@@ -99,7 +101,7 @@ Now there are three modes you can use on Android and iOS applications:
 - User can set colors for both status and navigation bars on Android.
 - Available geometry is fullscreen - system bars height.
 
-That is the default mode on Android, but the infamous "white bar" bug make it pretty much useless.
+That is the default mode on Android, but the infamous "white bar" bug make it pretty much useless (pre Qt 6.7.x).
 
 #### "Regular with transparent bars"
 
@@ -152,7 +154,7 @@ On Android API 28+, the theme must be set each time the window visibility or ori
 > deviceTheme
 
 You can get the device OS theme by reading the deviceTheme property.  
-MobileUI doesn't listen to the change affecting this value and won't signal you when it's changed. 
+MobileUI doesn't listen to the change affecting this value and won't signal you when it's changed.  
 
 You should probably not switch your app theme while it's being used anyway, so it may be wise to only check this value when the application is loading or brought back to the foreground.  
 
@@ -193,7 +195,7 @@ mobileUI.setScreenAlwaysOn(true)
 mobileUI.screenAlwaysOn: true
 ```
 
-### Force screen orientation
+### Set screen orientation
 
 This will force the device screen orientation into one of the available values. This canot be used to read the actual device orientation.
 
@@ -214,6 +216,19 @@ Available orientations:
 - Landscape_right
 - Landscape_sensor // only available on Android
 
+### Set screen brightness
+
+Set screen brightness for the currently running application.
+
+```qml
+Slider {
+    from: 0
+    to: 100
+    value: mobileUI.screenBrightness
+    onMoved: mobileUI.screenBrightness = value
+}
+```
+
 ### Haptic feedback
 
 Produce a simple haptic feedback, called "notification feedback" on iOS or a "tick" on Android.
@@ -221,6 +236,37 @@ Produce a simple haptic feedback, called "notification feedback" on iOS or a "ti
 ```qml
 mobileUI.vibrate()
 ```
+
+### Back to home screen
+
+#### Android
+
+You can use this method to bypass the default behavior for the Android back button,
+which is to kill the application instead of doing what every single Android application does,
+going back to the home screen...
+
+Either use it on you application window 'onClosing' signal:
+
+```qml
+onClosing: (close) => {
+    if (Qt.platform.os == "android") {
+        close.accepted = false
+        mobileUI.backToHomeScreen()
+    }
+}
+```
+
+Or on an appropriate 'onBackPressed' signal:
+
+```qml
+Keys.onBackPressed: {
+    mobileUI.backToHomeScreen()
+}
+```
+
+#### iOS
+
+Going back to the home screen from an application is not possible on iOS, and thus this function does nothing.
 
 ## Licensing
 
