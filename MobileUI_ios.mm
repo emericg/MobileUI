@@ -273,6 +273,18 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
 /* ************************************************************************** */
 
+int MobileUIPrivate::getScreenBrightness()
+{
+    // TODO
+}
+
+void MobileUIPrivate::setScreenBrightness(const int value)
+{
+    // TODO
+}
+
+/* ************************************************************************** */
+
 void MobileUIPrivate::vibrate()
 {
     // available impacts: light, medium, heavy, soft, rigid
@@ -283,6 +295,13 @@ void MobileUIPrivate::vibrate()
     //[generator prepare];
     [generator impactOccurred];
     generator = nil;
+}
+
+/* ************************************************************************** */
+
+void MobileUIPrivate::backToHomeScreen()
+{
+    return;
 }
 
 /* ************************************************************************** */
