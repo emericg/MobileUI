@@ -431,6 +431,18 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
 /* ************************************************************************** */
 
+int MobileUIPrivate::getScreenBrightness()
+{
+    return -1; // TODO
+}
+
+void MobileUIPrivate::setScreenBrightness(const int value)
+{
+    // TODO
+}
+
+/* ************************************************************************** */
+
 void MobileUIPrivate::vibrate()
 {
     QtAndroid::runOnAndroidThread([=]() {
@@ -472,6 +484,17 @@ void MobileUIPrivate::vibrate()
             env->ExceptionClear();
         }
     });
+}
+
+/* ************************************************************************** */
+
+void MobileUIPrivate::backToHomeScreen()
+{
+    QAndroidJniObject activity = QtAndroid::androidActivity();
+    if (activity.isValid())
+    {
+        activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
+    }
 }
 
 /* ************************************************************************** */

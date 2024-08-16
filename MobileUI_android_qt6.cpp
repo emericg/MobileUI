@@ -419,6 +419,42 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
 /* ************************************************************************** */
 
+int MobileUIPrivate::getScreenBrightness()
+{
+    QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    QJniObject window = activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+
+    // If we have set a brightness value for the current application
+    QJniObject layoutParams = window.callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
+    float brightnessApp = layoutParams.getField<jfloat>("screenBrightness");
+    if (brightnessApp >= 0.f) return static_cast<int>(brightnessApp * 100.f);
+
+    // Otherwise, we try to read the system wide brightness value
+    QJniObject contentResolver = activity.callObjectMethod("getContentResolver", "()Landroid/content/ContentResolver;");
+    QJniObject SCREEN_BRIGHTNESS = QJniObject::getStaticObjectField("android/provider/Settings$System",
+                                                                    "SCREEN_BRIGHTNESS", "Ljava/lang/String;");
+    jint brightnessOS = QJniObject::callStaticMethod<jint>("android/provider/Settings$System",
+                                                           "getInt", "(Landroid/content/ContentResolver;Ljava/lang/String;)I",
+                                                           contentResolver.object(), SCREEN_BRIGHTNESS.object<jstring>());
+
+    return static_cast<int>((brightnessOS / 255.f) * 100.f);  // SCREEN_BRIGHTNESS is 0 to ???
+}
+
+void MobileUIPrivate::setScreenBrightness(const int value)
+{
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
+        QJniObject window = getAndroidWindow();
+        QJniObject layoutParams = window.callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
+
+        float brigthness = value / 100.f; // screenBrightness is 0.0 to 1.0
+        layoutParams.setField("screenBrightness", brigthness);
+
+        window.callMethod<void>("setAttributes", "(Landroid/view/WindowManager$LayoutParams;)V", layoutParams.object());
+    });
+}
+
+/* ************************************************************************** */
+
 void MobileUIPrivate::vibrate()
 {
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
@@ -456,12 +492,19 @@ void MobileUIPrivate::vibrate()
                 }
             }
         }
-        QJniEnvironment env;
-        if (env->ExceptionCheck())
-        {
-            env->ExceptionClear();
-        }
     });
+}
+
+/* ************************************************************************** */
+
+void MobileUIPrivate::backToHomeScreen()
+{
+    QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    if (activity.isValid())
+    {
+        // Sends the application to the background
+        activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
+    }
 }
 
 /* ************************************************************************** */

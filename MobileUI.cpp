@@ -175,9 +175,26 @@ void MobileUI::setScreenAlwaysOn(const bool value)
 
 /* ************************************************************************** */
 
+int MobileUI::getScreenBrightness()
+{
+    return MobileUIPrivate::getScreenBrightness();
+}
+
+void MobileUI::setScreenBrightness(const int value)
+{
+    return MobileUIPrivate::setScreenBrightness(value);
+}
+
+/* ************************************************************************** */
+
 void MobileUI::vibrate()
 {
     MobileUIPrivate::vibrate();
+}
+
+void MobileUI::backToHomeScreen()
+{
+    MobileUIPrivate::backToHomeScreen();
 }
 
 /* ************************************************************************** */
