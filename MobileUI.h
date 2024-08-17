@@ -36,6 +36,9 @@ class MobileUI : public QObject
 
     Q_PROPERTY(Theme deviceTheme READ getDeviceTheme NOTIFY devicethemeUpdated)
 
+    Q_PROPERTY(bool isPhone READ isDevicePhone CONSTANT)
+    Q_PROPERTY(bool isTablet READ isDeviceTablet CONSTANT)
+
     Q_PROPERTY(QColor statusbarColor READ getStatusbarColor WRITE setStatusbarColor NOTIFY statusbarUpdated)
     Q_PROPERTY(Theme statusbarTheme READ getStatusbarTheme WRITE setStatusbarTheme NOTIFY statusbarUpdated)
     Q_PROPERTY(int statusbarHeight READ getStatusbarHeight NOTIFY statusbarUpdated)
@@ -61,9 +64,15 @@ Q_SIGNALS:
     void screenUpdated();
 
 public:
-    explicit MobileUI(QObject *parent = nullptr) : QObject(parent) {}
+    MobileUI(QObject *parent = nullptr);
 
     static void registerQML();
+
+    static bool isPhone;
+    static bool isTablet;
+
+    static bool isDevicePhone() { return MobileUI::isPhone; }
+    static bool isDeviceTablet() { return MobileUI::isTablet; }
 
     // Device theme ////////////////////////////////////////////////////////////
 
@@ -160,7 +169,7 @@ public:
      * If brightness has not been set for the current app, this function will
      * return the OS wide brightness level.
      */
-    Q_INVOKABLE static int getScreenBrightness();
+    static int getScreenBrightness();
 
     /*!
      * \brief Set screen brightness for the current app (not system wide).

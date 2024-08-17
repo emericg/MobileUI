@@ -24,9 +24,14 @@
 #include "MobileUI.h"
 #include "MobileUI_private.h"
 
+#include <QGuiApplication>
 #include <QQmlEngine>
+#include <QScreen>
 
 /* ************************************************************************** */
+
+bool MobileUI::isPhone = false;
+bool MobileUI::isTablet = false;
 
 bool MobileUIPrivate::areRefreshSlotsConnected = false;
 
@@ -50,6 +55,23 @@ void MobileUI::registerQML()
     qRegisterMetaType<MobileUI::ScreenOrientation>("MobileUI::ScreenOrientation");
 
     qmlRegisterType<MobileUI>("MobileUI", 1, 0, "MobileUI");
+}
+
+/* ************************************************************************** */
+
+MobileUI::MobileUI(QObject *parent) : QObject(parent)
+{
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    QScreen *screen = qApp->primaryScreen();
+    if (screen)
+    {
+        double screenSizeInch = std::sqrt(std::pow(screen->physicalSize().width(), 2.0) +
+                                          std::pow(screen->physicalSize().height(), 2.0)) / (2.54 * 10.0);
+
+        if (screenSizeInch < 7.0) MobileUI::isPhone = true;
+        else MobileUI::isTablet = true;
+    }
+#endif
 }
 
 /* ************************************************************************** */
