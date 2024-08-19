@@ -293,7 +293,7 @@ void MobileUIPrivate::setScreenBrightness(const int value)
     SEL mainScreenSelector = sel_registerName("mainScreen");
     id mainScreen = ((id(*)(Class, SEL))objc_msgSend)(uiScreenClass, mainScreenSelector);
 
-    float brightness = value / 100.f;
+    float brightness = value / 100.f; // brightness is 0.0 to 1.0
     if (brightness < 0.0f) brightness = 0.0f;
     if (brightness > 1.0f) brightness = 1.0f;
 

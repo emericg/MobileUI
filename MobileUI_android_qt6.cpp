@@ -452,9 +452,11 @@ void MobileUIPrivate::setScreenBrightness(const int value)
         QJniObject window = getAndroidWindow();
         QJniObject layoutParams = window.callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
 
-        float brigthness = value / 100.f; // screenBrightness is 0.0 to 1.0
-        layoutParams.setField("screenBrightness", brigthness);
+        float brightness = value / 100.f; // screenBrightness is 0.0 to 1.0
+        if (brightness < 0.0f) brightness = 0.0f;
+        if (brightness > 1.0f) brightness = 1.0f;
 
+        layoutParams.setField("screenBrightness", brightness);
         window.callMethod<void>("setAttributes", "(Landroid/view/WindowManager$LayoutParams;)V", layoutParams.object());
     });
 }

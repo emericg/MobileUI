@@ -439,12 +439,33 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
 int MobileUIPrivate::getScreenBrightness()
 {
-    return -1; // TODO
+    QAndroidJniObject activity = QtAndroid::androidActivity();
+    QAndroidJniObject window = activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+
+    // If we have set a brightness value for the current application
+    QAndroidJniObject layoutParams = window.callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
+    float brightnessApp = layoutParams.getField<jfloat>("screenBrightness");
+    if (brightnessApp >= 0.f) return static_cast<int>(brightnessApp * 100.f);
+
+    // Otherwise, we try to read the system wide brightness value
+    // TODO
+
+    return -1;
 }
 
 void MobileUIPrivate::setScreenBrightness(const int value)
 {
-    // TODO
+    QtAndroid::runOnAndroidThread([=]() {
+        QAndroidJniObject window = getAndroidWindow();
+        QAndroidJniObject layoutParams = window.callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
+
+        float brightness = value / 100.f; // screenBrightness is 0.0 to 1.0
+        if (brightness < 0.0f) brightness = 0.0f;
+        if (brightness > 1.0f) brightness = 1.0f;
+
+        layoutParams.setField("screenBrightness", brightness);
+        window.callMethod<void>("setAttributes", "(Landroid/view/WindowManager$LayoutParams;)V", layoutParams.object());
+    });
 }
 
 /* ************************************************************************** */
