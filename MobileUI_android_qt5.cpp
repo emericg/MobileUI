@@ -145,9 +145,12 @@ void MobileUIPrivate::setColor_statusbar(const QColor &color)
         window.callMethod<void>("clearFlags", "(I)V", FLAG_TRANSLUCENT_STATUS);
         window.callMethod<void>("setStatusBarColor", "(I)V", color.rgba());
 
-        // derive the theme from the color
-        MobileUIPrivate::statusbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
-        setTheme_statusbar(MobileUIPrivate::statusbarTheme);
+        if (color != "transparent")
+        {
+            // derive the theme from the color, if possible
+            MobileUIPrivate::statusbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
+            setTheme_statusbar(MobileUIPrivate::statusbarTheme);
+        }
     });
 }
 
@@ -238,9 +241,12 @@ void MobileUIPrivate::setColor_navbar(const QColor &color)
             window_android.callMethod<void>("setNavigationBarColor", "(I)V", color.rgba());
         }
 
-        // derive the theme from the color
-        MobileUIPrivate::navbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
-        setTheme_navbar(MobileUIPrivate::navbarTheme);
+        if (color != "transparent")
+        {
+            // derive the theme from the color, if possible
+            MobileUIPrivate::navbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
+            setTheme_navbar(MobileUIPrivate::navbarTheme);
+        }
     });
 }
 

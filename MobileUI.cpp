@@ -90,8 +90,11 @@ QColor MobileUI::getStatusbarColor()
 
 void MobileUI::setStatusbarColor(const QColor &color)
 {
-    MobileUIPrivate::statusbarColor = color;
-    MobileUIPrivate::setColor_statusbar(color);
+    if (color.isValid())
+    {
+        MobileUIPrivate::statusbarColor = color;
+        MobileUIPrivate::setColor_statusbar(color);
+    }
 }
 
 MobileUI::Theme MobileUI::getStatusbarTheme()
@@ -114,8 +117,11 @@ QColor MobileUI::getNavbarColor()
 
 void MobileUI::setNavbarColor(const QColor &color)
 {
-    MobileUIPrivate::navbarColor = color;
-    MobileUIPrivate::setColor_navbar(color);
+    if (color.isValid())
+    {
+        MobileUIPrivate::navbarColor = color;
+        MobileUIPrivate::setColor_navbar(color);
+    }
 }
 
 MobileUI::Theme MobileUI::getNavbarTheme()
@@ -133,9 +139,13 @@ void MobileUI::setNavbarTheme(const MobileUI::Theme theme)
 
 void MobileUI::refreshUI()
 {
-    MobileUIPrivate::setColor_statusbar(MobileUIPrivate::statusbarColor);
+    if (MobileUIPrivate::statusbarColor.isValid())
+        MobileUIPrivate::setColor_statusbar(MobileUIPrivate::statusbarColor);
+
+    if (MobileUIPrivate::navbarColor.isValid())
+        MobileUIPrivate::setColor_navbar(MobileUIPrivate::navbarColor);
+
     MobileUIPrivate::setTheme_statusbar(MobileUIPrivate::statusbarTheme);
-    MobileUIPrivate::setColor_navbar(MobileUIPrivate::navbarColor);
     MobileUIPrivate::setTheme_navbar(MobileUIPrivate::navbarTheme);
 }
 
