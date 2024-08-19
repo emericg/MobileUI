@@ -193,7 +193,7 @@ void MobileUIPrivate::setTheme_statusbar(const MobileUI::Theme theme)
                                      qApp, [](Qt::ScreenOrientation) { refreshUI_async(); });
                 }
 
-                QWindowList windows =  qApp->allWindows();
+                QWindowList windows = qApp->allWindows();
                 if (windows.size() && windows.at(0))
                 {
                     QWindow *window_qt = windows.at(0);
@@ -279,7 +279,7 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
                                      qApp, [](Qt::ScreenOrientation) { refreshUI_async(); });
                 }
 
-                QWindowList windows =  qApp->allWindows();
+                QWindowList windows = qApp->allWindows();
                 if (windows.size() && windows.at(0))
                 {
                     QWindow *window_qt = windows.at(0);

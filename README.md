@@ -12,7 +12,7 @@ You can see it in action in the [MobileUI demo](https://github.com/emericg/Mobil
 
 ## Features
 
-- Set Android `status bar` and `navigation bar` color and theme
+- Set Android `status bar` and `navigation bar` colors and theme
 - Set iOS `status bar` theme (iOS has no notion of status bar color, and has no navigation bar)
 - Get device theme (light or dark mode)
 - Get device `safe areas`
@@ -89,63 +89,84 @@ ApplicationWindow {
 
 ### Window modes
 
-Now there are three modes you can use on Android and iOS applications:
+There are three modes you can use on Android and iOS applications:
 
 #### "Regular"
 
-> ApplicationWindow visibility: Window.AutomaticVisibility
-
-> ApplicationWindow flags: Qt.Window
+```qml
+ApplicationWindow {
+    flags: Qt.Window
+    visibility: Window.AutomaticVisibility
+}
+```
 
 - Black status bar on iOS (you can't change that).
 - User can set colors for both status and navigation bars on Android.
 - Available geometry is fullscreen - system bars height.
+- No need to handle safe areas.
 
 That is the default mode on Android, but the infamous "white bar" bug make it pretty much useless (pre Qt 6.7.x).
 
 #### "Regular with transparent bars"
 
-> ApplicationWindow visibility: Window.AutomaticVisibility
-
-> ApplicationWindow flags: Qt.Window | Qt.MaximizeUsingFullscreenGeometryHint
+```qml
+ApplicationWindow {
+    flags: Qt.Window | Qt.MaximizeUsingFullscreenGeometryHint
+    visibility: Window.AutomaticVisibility
+}
+```
 
 - The status bar is transparent on iOS, and you can choose the theme. Your application can draw a bar "manually" to visualize it.
 - The status bar is transparent on Android, and you can choose the theme. Your application can draw a bar "manually" to visualize it, or force a system bar color (it will be drawn above everyting).
 - The navigation bar is transparent on Android, and you can choose the theme. MobileUI will prevent you from forcing a color, because that would change the windows mode back to "regular", but not really.
-- Available geometry is the full screen; including what's behind system bars.
+- Available geometry is the full screen, including what's behind system bars.
 
 That is the default mode on iOS.
 
 #### Full screen / "immersive" modes
 
-> ApplicationWindow visibility: Window.FullScreen
+```qml
+ApplicationWindow {
+    flags: Qt.Window | Qt.MaximizeUsingFullscreenGeometryHint
+    visibility: Window.FullScreen
+}
+```
 
 - No system bars drawn at all.
 - Available geometry is the full screen.
+
+#### Notes
+
+"Regular with transparent bars" is really the mode I would recommend.
+It offers the most flexibility, but you'll need to handle the space occupied by the status and navigation bars yourself.
+
+Switching dynamically between the three modes on Android is very glitchy, and not advised. Especially between the "regular" mode and the other two.
+
+All in all, window modes and window geometry are just very buggy on Android, and subtly broken depending on which Qt version is used.
 
 ### Settings colors and theme
 
 > statusbarColor
 
 Set the status bar color (if available).  
-This is a QColor, so you can use an hexadecimal value ("#fff") or even a named color ("red"). And you can use "transparent" too.  
+This is a QColor, so you can use a hexadecimal value "`#fff"` or even a named color `"red"`. And you can use `"transparent"` too.  
 Settings a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.  
 
 > statusbarTheme
 
-Set the status bar theme explicitly, MobileUI.Light or MobileUI.Dark.
+Set the status bar theme explicitly, `MobileUI.Light` or `MobileUI.Dark`.
 
 On iOS and Android API 28+, the theme must be set each time the window visibility or orientation changes. This is done automatically.
 
 > navbarColor
 
 Set the navigation bar color (if available).  
-This is a QColor, so you can use an hexadecimal value ("#fff") or even a named color ("red"). And you can use "transparent" too.  
+This is a QColor, so you can use a hexadecimal value "`#fff"` or even a named color `"red"`. And you can use `"transparent"` too.  
 Settings a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.  
 
 > navbarTheme
 
-Set the navigation bar theme explicitly, MobileUI.Light or MobileUI.Dark.
+Set the navigation bar theme explicitly, `MobileUI.Light` or `MobileUI.Dark`.
 
 On Android API 28+, the theme must be set each time the window visibility or orientation changes. This is done automatically.
 
@@ -171,10 +192,15 @@ Connections {
 
 ### Safe areas
 
+Safe areas handling is not straightforward, unfortunately. Most of it will be left into your care.
+
 > statusbarHeight
 
 > navbarHeight
 
+Status bar and navigation bar size, in pixels. These values do not change when the screen is rotated.
+
+Status bar is always on top of the screen when visible. The navigation bar can be left/right of the screen, when the phone is rotated.
 
 > safeAreaTop
 
@@ -184,11 +210,14 @@ Connections {
 
 > safeAreaBottom
 
+These values are what's returned by the OS, and you'll need to understand what's what, depending on what window mode and screen rotation you're in,
+and especially, what do you want to do with them depending on the need of your application.
+
+These values are changed by the OS when the screen is rotated.
+
 ### Lock screensaver
 
-Either call ```setScreenAlwaysOn(true/false)``` or set ```screenAlwaysOn: true/false``` in QML.
-
-This will disable/enable the device screensaver.
+Either call `setScreenAlwaysOn(true/false)` or set `screenAlwaysOn: true/false` in QML. This will disable/enable the device screensaver.
 
 ```qml
 mobileUI.setScreenAlwaysOn(true)
@@ -197,9 +226,9 @@ mobileUI.screenAlwaysOn: true
 
 ### Set screen orientation
 
-This will force the device screen orientation into one of the available values. This canot be used to read the actual device orientation.
+This will force the device screen orientation into one of the available values. This cannot be used to read the actual device orientation.
 
-Either call ```setScreenOrientation(MobileUI.ScreenOrientation)``` or set ```screenOrientation: MobileUI.ScreenOrientation``` in QML.
+Either call `setScreenOrientation(MobileUI.ScreenOrientation)` or set `screenOrientation: MobileUI.ScreenOrientation` in QML.
 
 ```qml
 mobileUI.setScreenOrientation(MobileUI.Landscape_left)
@@ -208,17 +237,23 @@ mobileUI.screenOrientation: MobileUI.Landscape_right
 
 Available orientations:
 
-- Unlocked
-- Portrait
-- Portrait_upsidedown
-- Portrait_sensor // only available on Android
-- Landscape_left
-- Landscape_right
-- Landscape_sensor // only available on Android
+> Unlocked
+
+> Portrait
+
+> Portrait_upsidedown // only available on Android?
+
+> Portrait_sensor // only available on Android
+
+> Landscape_left
+
+> Landscape_right
+
+> Landscape_sensor // only available on Android
 
 ### Set screen brightness
 
-Set screen brightness for the currently running application.
+Set screen brightness for the currently running application (on Android) or system wide (on iOS).
 
 ```qml
 Slider {
@@ -231,7 +266,8 @@ Slider {
 
 ### Haptic feedback
 
-Produce a simple haptic feedback, called "notification feedback" on iOS or a "tick" on Android.
+Produce a simple haptic feedback, called "notification feedback" on iOS or a "tick" on Android.  
+No model of iPad includes a haptic engine. Android tablets usually have one.
 
 ```qml
 mobileUI.vibrate()
@@ -242,10 +278,9 @@ mobileUI.vibrate()
 #### Android
 
 You can use this method to bypass the default behavior for the Android back button,
-which is to kill the application instead of doing what every single Android application does,
-going back to the home screen...
+which is to kill the application instead of doing what every single Android application does, going back to the home screen...
 
-Either use it on you application window 'onClosing' signal:
+Either use it on your application window 'onClosing' signal:
 
 ```qml
 onClosing: (close) => {

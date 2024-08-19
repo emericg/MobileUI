@@ -84,7 +84,6 @@ public:
 
     /*!
      * \brief Get the theme currently in effect on this device.
-     * \note Not available yet on iOS.
      * \return see MobileUI::Theme enum.
      */
     static MobileUI::Theme getDeviceTheme();
@@ -163,7 +162,7 @@ public:
     Q_INVOKABLE static void setScreenAlwaysOn(const bool value);
 
     /*!
-     * \brief Get screen brightness set for the current app.
+     * \brief Get screen brightness set for the current app (on Android) or system wide (on iOS).
      * \return screen brightness, from 0 to 100.
      *
      * If brightness has not been set for the current app, this function will
@@ -172,7 +171,7 @@ public:
     static int getScreenBrightness();
 
     /*!
-     * \brief Set screen brightness for the current app (not system wide).
+     * \brief Set screen brightness for the current app (on Android) or system wide (on iOS).
      * \param value: screen brightness, from 0 to 100.
      */
     Q_INVOKABLE static void setScreenBrightness(const int value);
@@ -181,8 +180,8 @@ public:
 
     /*!
      * \brief Trigger an haptic feedback.
-     *
-     * On Android the "android.permission.VIBRATE" must be added to the manifest.
+     * \note iPads don't support haptic feedbacks.
+     * \note On Android the "android.permission.VIBRATE" must be added to the manifest.
      */
     Q_INVOKABLE static void vibrate();
 
