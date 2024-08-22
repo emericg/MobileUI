@@ -14,10 +14,10 @@ You can see it in action in the [MobileUI demo](https://github.com/emericg/Mobil
 
 - Set Android `status bar` and `navigation bar` colors and theme
 - Set iOS `status bar` theme (iOS has no notion of status bar color, and has no navigation bar)
-- Get device theme (light or dark mode)
+- Get device theme (light or dark mode, as set by the OS)
 - Get device `safe areas`
 - Lock screensaver
-- Set screen orientation
+- Force screen orientation
 - Set screen brightness
 - Trigger haptic feedback (vibration)
 - Android back button helper
@@ -58,10 +58,10 @@ int main() {
 
     MobileUI::registerQML(); // that is required
 
-    MobileUI::setStatusbarColor("white"); // use it directly if you want
+    MobileUI::setStatusbarColor("white"); // use it directly in C++ if you want
 
     QQmlApplicationEngine engine;
-    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/Application.qml")));
 
     return app.exec();
 }
@@ -84,6 +84,28 @@ ApplicationWindow {
     }
 }
 ```
+
+### Caveats
+
+#### iOS
+
+It looks like forcing the screen orientation on an iPad is not allowed.
+
+#### Android
+
+Transition between the splash screen and the application window will glitch. As far as I know there is no way to fix that.  
+You'll see the window beeing resized (more or less the size of the status bar), and the status bar changing color, usually to black, but you might be lucky and
+get a light grey depending on your device. It's bad if you're coming from a white splash screen, seeing a black bar appear, and going to a white application background...
+
+The infamous "white bar" bug (a white line visible between the Android status bar and the Qt appliation content) make the "regular" window mode pretty much useless (pre Qt 6.7).
+
+Screen rotation is mostly broken (pre Qt 6.7).
+
+Switching dynamically between the three window modes is very glitchy, and not advised. Especially between the "regular" mode and the other twos.
+
+When using the "Regular with transparent bars" window mode, screen rotation will break presentation if no status bar color has been set. Setting a transparent color seems to be enough to fix the issue.
+
+All in all, window modes, geometry, rotation are just **very** buggy on Android, and subtly broken depending on which Qt version is used.
 
 ## Quick documentation
 
@@ -138,17 +160,16 @@ ApplicationWindow {
 #### Notes
 
 "Regular with transparent bars" is really the mode I would recommend.
-It offers the most flexibility, but you'll need to handle the space occupied by the status and navigation bars yourself.
 
-Switching dynamically between the three modes on Android is very glitchy, and not advised. Especially between the "regular" mode and the other two.
-
-All in all, window modes and window geometry are just very buggy on Android, and subtly broken depending on which Qt version is used.
+It offers the most flexibility, but you'll need to handle the space occupied by 
+the status and navigation bars yourself. The safe areas handling also becomes necessary.
 
 ### Settings colors and theme
 
 > statusbarColor
 
-Set the status bar color (if available).  
+Set the status bar color (if available).
+
 This is a QColor, so you can use a hexadecimal value "`#fff"` or even a named color `"red"`. And you can use `"transparent"` too.  
 Settings a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.  
 
@@ -160,7 +181,8 @@ On iOS and Android API 28+, the theme must be set each time the window visibilit
 
 > navbarColor
 
-Set the navigation bar color (if available).  
+Set the navigation bar color (if available).
+
 This is a QColor, so you can use a hexadecimal value "`#fff"` or even a named color `"red"`. And you can use `"transparent"` too.  
 Settings a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.  
 
@@ -174,10 +196,12 @@ On Android API 28+, the theme must be set each time the window visibility or ori
 
 > deviceTheme
 
-You can get the device OS theme by reading the deviceTheme property.  
-MobileUI doesn't listen to the change affecting this value and won't signal you when it's changed.  
+You can get the device OS theme by reading the deviceTheme property.
 
-You should probably not switch your app theme while it's being used anyway, so it may be wise to only check this value when the application is loading or brought back to the foreground.  
+MobileUI doesn't listen to the change affecting this value and won't signal you when it's changed.
+
+You should probably not switch your app theme while it's being used anyway,
+so it may be wise to only check this value when the application is loading or brought back to the foreground.
 
 ```qml
 Connections {
@@ -210,21 +234,23 @@ Status bar is always on top of the screen when visible. The navigation bar can b
 
 > safeAreaBottom
 
-These values are what's returned by the OS, and you'll need to understand what's what, depending on what window mode and screen rotation you're in,
-and especially, what do you want to do with them depending on the need of your application.
+These values are what's returned by the OS, and you'll need to understand what's what,
+depending on what window mode and screen rotation you're in, and especially,
+what do you want to do with them depending on the need of your application.
 
 These values are changed by the OS when the screen is rotated.
 
 ### Lock screensaver
 
-Either call `setScreenAlwaysOn(true/false)` or set `screenAlwaysOn: true/false` in QML. This will disable/enable the device screensaver.
+Either call `setScreenAlwaysOn(true/false)` or set `screenAlwaysOn: true/false` in QML.
+This will disable/enable the device screensaver.
 
 ```qml
 mobileUI.setScreenAlwaysOn(true)
 mobileUI.screenAlwaysOn: true
 ```
 
-### Set screen orientation
+### Force screen orientation
 
 This will force the device screen orientation into one of the available values. This cannot be used to read the actual device orientation.
 
@@ -278,7 +304,8 @@ mobileUI.vibrate()
 #### Android
 
 You can use this method to bypass the default behavior for the Android back button,
-which is to kill the application instead of doing what every single Android application does, going back to the home screen...
+which is to kill the application instead of doing what every single Android application does,
+going back to the home screen...
 
 Either use it on your application window 'onClosing' signal:
 
