@@ -85,27 +85,29 @@ ApplicationWindow {
 }
 ```
 
-### Caveats
+## Caveats
 
-#### iOS
+### iOS
 
-It looks like forcing the screen orientation on an iPad is not allowed.
+- It looks like forcing the screen orientation on an iPad is not allowed.
 
-#### Android
+### Android
 
-Transition between the splash screen and the application window will glitch. As far as I know there is no way to fix that.  
+- Transition between the splash screen and the application window will glitch. As far as I know there is no way to fix that.  
 You'll see the window beeing resized (more or less the size of the status bar), and the status bar changing color, usually to black, but you might be lucky and
 get a light grey depending on your device. It's bad if you're coming from a white splash screen, seeing a black bar appear, and going to a white application background...
 
-The infamous "white bar" bug (a white line visible between the Android status bar and the Qt appliation content) make the "regular" window mode pretty much useless (pre Qt 6.7).
+- The infamous "white bar" bug (a white line visible between the Android status bar and the Qt appliation content) make the "regular" window mode pretty much useless (pre Qt 6.7).
 
-Screen rotation is mostly broken (pre Qt 6.7).
+- Screen rotation is mostly broken (pre Qt 6.7).
 
-Switching dynamically between the three window modes is very glitchy, and not advised. Especially between the "regular" mode and the other twos.
+- Keyboard always appears when an application is brought back to the foreground if `android:windowSoftInputMode="adjustResize"` is set in the manifest (Qt 6.7+).
 
-When using the "Regular with transparent bars" window mode, screen rotation will break presentation if no status bar color has been set. Setting a transparent color seems to be enough to fix the issue.
+- Switching dynamically between the three window modes is very glitchy, and not advised. Especially between the "regular" mode and the other twos.
 
-All in all, window modes, geometry, rotation are just **very** buggy on Android, and subtly broken depending on which Qt version is used.
+- When using the "Regular with transparent bars" window mode, screen rotation will break presentation if no status bar color has been set. Setting a transparent color seems to be enough to fix the issue.
+
+All in all, window modes, geometry, rotation and many smaller things are just **very** buggy on Android, and subtly broken depending on which Qt version is used.
 
 ## Quick documentation
 
