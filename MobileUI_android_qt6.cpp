@@ -25,8 +25,8 @@
 
 #include <QGuiApplication>
 #include <QScreen>
-#include <QWindow>
 #include <QTimer>
+#include <QWindow>
 
 #include <QJniObject>
 
@@ -83,30 +83,22 @@ static bool isQColorLight(const QColor color)
 static QJniObject getAndroidWindow()
 {
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    QJniObject window = activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
-
-    return window;
+    return activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
 }
 
 static QJniObject getAndroidDecorView()
 {
-    QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    QJniObject window = activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
-    QJniObject view = window.callObjectMethod("getDecorView", "()Landroid/view/View;");
-
-    return view;
+    return getAndroidWindow().callObjectMethod("getDecorView", "()Landroid/view/View;");
 }
 
 static QJniObject getDisplayCutout()
 {
-    if (QNativeInterface::QAndroidApplication::sdkVersion() >= 28)
-    {
+    if (QNativeInterface::QAndroidApplication::sdkVersion() >= 28) {
         // DisplayCutout has been added in API level 28
-        QJniObject activity = QNativeInterface::QAndroidApplication::context();
-        QJniObject window = activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
-        QJniObject decorview = window.callObjectMethod("getDecorView", "()Landroid/view/View;");
-        QJniObject insets = decorview.callObjectMethod("getRootWindowInsets", "()Landroid/view/WindowInsets;");
-        QJniObject cutout = insets.callObjectMethod("getDisplayCutout", "()Landroid/view/DisplayCutout;");
+        QJniObject insets = getAndroidDecorView().callObjectMethod("getRootWindowInsets",
+                                                                   "()Landroid/view/WindowInsets;");
+        QJniObject cutout = insets.callObjectMethod("getDisplayCutout",
+                                                    "()Landroid/view/DisplayCutout;");
 
         return cutout;
     }
@@ -118,13 +110,21 @@ static QJniObject getDisplayCutout()
 
 int MobileUIPrivate::getDeviceTheme()
 {
-    QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    QJniObject resources = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
-    QJniObject conf = resources.callObjectMethod("getConfiguration", "()Landroid/content/res/Configuration;");
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([] {
+               QJniObject activity = QNativeInterface::QAndroidApplication::context();
+               QJniObject resources
+                   = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
+               QJniObject conf = resources
+                                     .callObjectMethod("getConfiguration",
+                                                       "()Landroid/content/res/Configuration;");
 
-    int uiMode = (conf.getField<int>("uiMode") & UI_MODE_NIGHT_MASK);
+               int uiMode = (conf.getField<int>("uiMode") & UI_MODE_NIGHT_MASK);
 
-    return (uiMode == UI_MODE_NIGHT_YES) ? MobileUI::Theme::Dark : MobileUI::Theme::Light;
+               return (uiMode == UI_MODE_NIGHT_YES) ? MobileUI::Theme::Dark
+                                                    : MobileUI::Theme::Light;
+           })
+        .result()
+        .toInt();
 }
 
 void MobileUIPrivate::refreshUI_async()
@@ -303,92 +303,120 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 
 int MobileUIPrivate::getStatusbarHeight()
 {
-    QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    QJniObject resources = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() -> int {
+               QJniObject activity = QNativeInterface::QAndroidApplication::context();
+               QJniObject resources
+                   = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
 
-    QJniObject name = QJniObject::fromString("status_bar_height");
-    QJniObject defType = QJniObject::fromString("dimen");
-    QJniObject defPackage = QJniObject::fromString("android");
+               QJniObject name = QJniObject::fromString("status_bar_height");
+               QJniObject defType = QJniObject::fromString("dimen");
+               QJniObject defPackage = QJniObject::fromString("android");
 
-    int identifier = resources.callMethod<int>("getIdentifier",
-                                               "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
-                                               name.object<jstring>(),
-                                               defType.object<jstring>(),
-                                               defPackage.object<jstring>());
+               int identifier = resources.callMethod<int>(
+                   "getIdentifier",
+                   "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
+                   name.object<jstring>(),
+                   defType.object<jstring>(),
+                   defPackage.object<jstring>());
 
-    if (identifier > 0)
-    {
-        return resources.callMethod<int>("getDimensionPixelSize", "(I)I", identifier) / qApp->devicePixelRatio();
-    }
+               if (identifier > 0) {
+                   return resources.callMethod<int>("getDimensionPixelSize", "(I)I", identifier)
+                          / qApp->devicePixelRatio();
+               }
 
-    return 24; // default
+               return 24; // default
+           })
+        .result()
+        .toInt();
 }
 
 int MobileUIPrivate::getNavbarHeight()
 {
-    QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    QJniObject resources = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() -> int {
+               QJniObject activity = QNativeInterface::QAndroidApplication::context();
+               QJniObject resources
+                   = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
 
-    QJniObject name = QJniObject::fromString("navigation_bar_height");
-    QJniObject defType = QJniObject::fromString("dimen");
-    QJniObject defPackage = QJniObject::fromString("android");
+               QJniObject name = QJniObject::fromString("navigation_bar_height");
+               QJniObject defType = QJniObject::fromString("dimen");
+               QJniObject defPackage = QJniObject::fromString("android");
 
-    int identifier = resources.callMethod<int>("getIdentifier",
-                                               "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
-                                               name.object<jstring>(),
-                                               defType.object<jstring>(),
-                                               defPackage.object<jstring>());
+               int identifier = resources.callMethod<int>(
+                   "getIdentifier",
+                   "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
+                   name.object<jstring>(),
+                   defType.object<jstring>(),
+                   defPackage.object<jstring>());
 
-    if (identifier > 0)
-    {
-        return resources.callMethod<int>("getDimensionPixelSize", "(I)I", identifier) / qApp->devicePixelRatio();
-    }
+               if (identifier > 0) {
+                   return resources.callMethod<int>("getDimensionPixelSize", "(I)I", identifier)
+                          / qApp->devicePixelRatio();
+               }
 
-    return 48; // default
+               return 48; // default
+           })
+        .result()
+        .toInt();
 }
 
 int MobileUIPrivate::getSafeAreaTop()
 {
-    QJniObject cutout = getDisplayCutout();
-    if (cutout.isValid())
-    {
-        return cutout.callMethod<int>("getSafeInsetTop", "()I") / qApp->devicePixelRatio();
-    }
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() -> int {
+               QJniObject cutout = getDisplayCutout();
+               if (cutout.isValid()) {
+                   return cutout.callMethod<int>("getSafeInsetTop", "()I")
+                          / qApp->devicePixelRatio();
+               }
 
-    return 0;
+               return 0;
+           })
+        .result()
+        .toInt();
 }
 
 int MobileUIPrivate::getSafeAreaLeft()
 {
-    QJniObject cutout = getDisplayCutout();
-    if (cutout.isValid())
-    {
-        return cutout.callMethod<int>("getSafeInsetLeft", "()I") / qApp->devicePixelRatio();
-    }
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() -> int {
+               QJniObject cutout = getDisplayCutout();
+               if (cutout.isValid()) {
+                   return cutout.callMethod<int>("getSafeInsetLeft", "()I")
+                          / qApp->devicePixelRatio();
+               }
 
-    return 0;
+               return 0;
+           })
+        .result()
+        .toInt();
 }
 
 int MobileUIPrivate::getSafeAreaRight()
 {
-    QJniObject cutout = getDisplayCutout();
-    if (cutout.isValid())
-    {
-        return cutout.callMethod<int>("getSafeInsetRight", "()I") / qApp->devicePixelRatio();
-    }
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() -> int {
+               QJniObject cutout = getDisplayCutout();
+               if (cutout.isValid()) {
+                   return cutout.callMethod<int>("getSafeInsetRight", "()I")
+                          / qApp->devicePixelRatio();
+               }
 
-    return 0;
+               return 0;
+           })
+        .result()
+        .toInt();
 }
 
 int MobileUIPrivate::getSafeAreaBottom()
 {
-    QJniObject cutout = getDisplayCutout();
-    if (cutout.isValid())
-    {
-        return cutout.callMethod<int>("getSafeInsetBottom", "()I") / qApp->devicePixelRatio();
-    }
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() -> int {
+               QJniObject cutout = getDisplayCutout();
+               if (cutout.isValid()) {
+                   return cutout.callMethod<int>("getSafeInsetBottom", "()I")
+                          / qApp->devicePixelRatio();
+               }
 
-    return 0;
+               return 0;
+           })
+        .result()
+        .toInt();
 }
 
 /* ************************************************************************** */
@@ -427,23 +455,35 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
 int MobileUIPrivate::getScreenBrightness()
 {
-    QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    QJniObject window = activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([] {
+               // If we have set a brightness value for the current application
+               QJniObject layoutParams = getAndroidWindow().callObjectMethod(
+                   "getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
+               float brightnessApp = layoutParams.getField<jfloat>("screenBrightness");
+               if (brightnessApp >= 0.f)
+                   return static_cast<int>(brightnessApp * 100.f);
 
-    // If we have set a brightness value for the current application
-    QJniObject layoutParams = window.callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
-    float brightnessApp = layoutParams.getField<jfloat>("screenBrightness");
-    if (brightnessApp >= 0.f) return static_cast<int>(brightnessApp * 100.f);
+               // Otherwise, we try to read the system wide brightness value
+               QJniObject activity = QNativeInterface::QAndroidApplication::context();
+               QJniObject contentResolver
+                   = activity.callObjectMethod("getContentResolver",
+                                               "()Landroid/content/ContentResolver;");
+               QJniObject SCREEN_BRIGHTNESS
+                   = QJniObject::getStaticObjectField("android/provider/Settings$System",
+                                                      "SCREEN_BRIGHTNESS",
+                                                      "Ljava/lang/String;");
+               jint brightnessOS = QJniObject::callStaticMethod<jint>(
+                   "android/provider/Settings$System",
+                   "getInt",
+                   "(Landroid/content/ContentResolver;Ljava/lang/String;)I",
+                   contentResolver.object(),
+                   SCREEN_BRIGHTNESS.object<jstring>());
 
-    // Otherwise, we try to read the system wide brightness value
-    QJniObject contentResolver = activity.callObjectMethod("getContentResolver", "()Landroid/content/ContentResolver;");
-    QJniObject SCREEN_BRIGHTNESS = QJniObject::getStaticObjectField("android/provider/Settings$System",
-                                                                    "SCREEN_BRIGHTNESS", "Ljava/lang/String;");
-    jint brightnessOS = QJniObject::callStaticMethod<jint>("android/provider/Settings$System",
-                                                           "getInt", "(Landroid/content/ContentResolver;Ljava/lang/String;)I",
-                                                           contentResolver.object(), SCREEN_BRIGHTNESS.object<jstring>());
-
-    return static_cast<int>((brightnessOS / 255.f) * 100.f);  // SCREEN_BRIGHTNESS is 0 to ???
+               return static_cast<int>((brightnessOS / 255.f)
+                                       * 100.f); // SCREEN_BRIGHTNESS is 0 to ???
+           })
+        .result()
+        .toInt();
 }
 
 void MobileUIPrivate::setScreenBrightness(const int value)
@@ -507,12 +547,13 @@ void MobileUIPrivate::vibrate()
 
 void MobileUIPrivate::backToHomeScreen()
 {
-    QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    if (activity.isValid())
-    {
-        // Sends the application to the background
-        activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
-    }
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
+        QJniObject activity = QNativeInterface::QAndroidApplication::context();
+        if (activity.isValid()) {
+            // Sends the application to the background
+            activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
+        }
+    });
 }
 
 /* ************************************************************************** */
