@@ -25,8 +25,8 @@
 
 #include <QGuiApplication>
 #include <QScreen>
-#include <QTimer>
 #include <QWindow>
+#include <QTimer>
 
 #include <QJniObject>
 
@@ -93,7 +93,8 @@ static QJniObject getAndroidDecorView()
 
 static QJniObject getDisplayCutout()
 {
-    if (QNativeInterface::QAndroidApplication::sdkVersion() >= 28) {
+    if (QNativeInterface::QAndroidApplication::sdkVersion() >= 28)
+    {
         // DisplayCutout has been added in API level 28
         QJniObject insets = getAndroidDecorView().callObjectMethod("getRootWindowInsets",
                                                                    "()Landroid/view/WindowInsets;");
@@ -112,11 +113,8 @@ int MobileUIPrivate::getDeviceTheme()
 {
     return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([] {
                QJniObject activity = QNativeInterface::QAndroidApplication::context();
-               QJniObject resources
-                   = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
-               QJniObject conf = resources
-                                     .callObjectMethod("getConfiguration",
-                                                       "()Landroid/content/res/Configuration;");
+               QJniObject resources = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
+               QJniObject conf = resources.callObjectMethod("getConfiguration", "()Landroid/content/res/Configuration;");
 
                int uiMode = (conf.getField<int>("uiMode") & UI_MODE_NIGHT_MASK);
 
@@ -549,7 +547,8 @@ void MobileUIPrivate::backToHomeScreen()
 {
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
         QJniObject activity = QNativeInterface::QAndroidApplication::context();
-        if (activity.isValid()) {
+        if (activity.isValid())
+        {
             // Sends the application to the background
             activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
         }
