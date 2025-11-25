@@ -544,3 +544,27 @@ void MobileUIPrivate::backToHomeScreen()
 }
 
 /* ************************************************************************** */
+
+float MobileUI::getSmartScaleFactor(float baseWidth, float baseDpi, float baseScale)
+{
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=] {
+               QJniObject activity = QNativeInterface::QAndroidApplication::context();
+               QJniObject resources = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
+               QJniObject displayMetrics = resources.callObjectMethod("getDisplayMetrics", "()Landroid/util/DisplayMetrics;");
+
+               int widthPixels = displayMetrics.getField<int>("widthPixels");
+               int heightPixels = displayMetrics.getField<int>("heightPixels");
+               int densityDpi = displayMetrics.getField<int>("densityDpi");
+               
+               // Use the shorter edge to ensure consistent scaling in both portrait and landscape
+               int shortestEdge = std::min(widthPixels, heightPixels);
+               
+               // Calculate logical width ratio
+               float scale = baseScale * ((static_cast<float>(shortestEdge) * baseDpi) / (baseWidth * static_cast<float>(densityDpi)));
+               return scale;
+           })
+        .result()
+        .toFloat();
+}
+
+/* ************************************************************************** */

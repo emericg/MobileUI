@@ -119,6 +119,15 @@ public:
 
     // Screen helpers //////////////////////////////////////////////////////////
 
+    /*!
+     * \brief Get a smart scaling factor based on device screen width and DPI.
+     * \param baseWidth: Width of the reference device.
+     * \param baseDpi: DPI of the reference device.
+     * \param baseScale: Scaling factor for the reference device.
+     * \return Computed scaling factor.
+     */
+    static float getSmartScaleFactor(float baseWidth, float baseDpi, float baseScale);
+
     enum ScreenOrientation {
         Unlocked = 0,
 

@@ -110,4 +110,12 @@ void MobileUIPrivate::backToHomeScreen()
     return;
 }
 
+float MobileUI::getSmartScaleFactor(float baseWidth, float baseDpi, float baseScale)
+{
+    Q_UNUSED(baseWidth);
+    Q_UNUSED(baseDpi);
+    Q_UNUSED(baseScale);
+    return 1.0f;
+}
+
 /* ************************************************************************** */

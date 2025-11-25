@@ -323,3 +323,24 @@ void MobileUIPrivate::backToHomeScreen()
 }
 
 /* ************************************************************************** */
+
+float MobileUI::getSmartScaleFactor(float baseWidth, float baseDpi, float baseScale)
+{
+    // We use nativeBounds to get the physical pixel dimensions
+    CGRect nativeBounds = [UIScreen mainScreen].nativeBounds;
+    CGFloat widthPixels = nativeBounds.size.width;
+    CGFloat heightPixels = nativeBounds.size.height;
+    CGFloat scaleFactor = [UIScreen mainScreen].nativeScale;
+    
+    // Use the shorter edge to ensure consistent scaling in both portrait and landscape
+    CGFloat shortestEdge = std::min(widthPixels, heightPixels);
+    
+    // iOS doesn't give DPI directly, but 'scale' is roughly density/160 (1x, 2x, 3x)
+    // We can treat 'scale * 160' as the DPI for the formula
+    // Ratio = (width * baseDpi) / (baseWidth * (scale * 160))
+    
+    float scale = baseScale * ((static_cast<float>(shortestEdge) * baseDpi) / (baseWidth * static_cast<float>(scaleFactor * 160.0f)));
+    return scale;
+}
+
+/* ************************************************************************** */
