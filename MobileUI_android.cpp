@@ -195,10 +195,10 @@ void MobileUIPrivate::setTheme_statusbar(const MobileUI::Theme theme)
                 }
 
                 QWindowList windows = qApp->allWindows();
-                if (windows.size() && windows.at(0))
+                if (!windows.isEmpty())
                 {
-                    QWindow *window_qt = windows.at(0);
-                    QObject::connect(window_qt, &QWindow::visibilityChanged,
+                    QWindow *window = windows.first();
+                    QObject::connect(window, &QWindow::visibilityChanged,
                                      qApp, [](QWindow::Visibility) { refreshUI_async(); });
                 }
 

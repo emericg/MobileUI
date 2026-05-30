@@ -91,9 +91,8 @@ int MobileUIPrivate::getDeviceTheme()
 
 void MobileUIPrivate::refreshUI_async()
 {
-    QTimer::singleShot(  0, []() { updatePreferredStatusBarStyle(); }); // now
-    //QTimer::singleShot( 32, []() { updatePreferredStatusBarStyle(); }); // after a frame
-    //QTimer::singleShot( 64, []() { updatePreferredStatusBarStyle(); }); // after a couple frames
+    QTimer::singleShot(0, []() { updatePreferredStatusBarStyle(); }); // now
+    QTimer::singleShot(66, []() { updatePreferredStatusBarStyle(); }); // after a couple of frames
 }
 
 /* ************************************************************************** */

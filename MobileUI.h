@@ -107,7 +107,9 @@ public:
     static MobileUI::Theme getNavbarTheme();
     static void setNavbarTheme(const MobileUI::Theme theme);
 
-    //! Refresh UI statusbar/navigationbar themes/colors
+    /*!
+     * \brief Refresh UI statusbar/navigationbar themes/colors.
+     */
     Q_INVOKABLE static void refreshUI();
 
     // Screen safe areas ///////////////////////////////////////////////////////

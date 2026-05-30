@@ -66,8 +66,8 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
         double screenSizeInch = std::sqrt(std::pow(screen->physicalSize().width(), 2.0) +
                                           std::pow(screen->physicalSize().height(), 2.0)) / (2.54 * 10.0);
 
-        if (screenSizeInch < 7.0) MobileUI::isPhone = true;
-        else MobileUI::isTablet = true;
+        if (screenSizeInch >= 7.0) MobileUI::isTablet = true;
+        else  MobileUI::isPhone = true;
     }
 #endif
 }
