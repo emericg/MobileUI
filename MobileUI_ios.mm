@@ -100,9 +100,12 @@ void MobileUIPrivate::refreshUI_async()
 
 void MobileUIPrivate::setColor_statusbar(const QColor &color)
 {
-    // derive the theme from the color
-    MobileUIPrivate::statusbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
-    setTheme_statusbar(MobileUIPrivate::statusbarTheme);
+    if (color.alpha() > 0)
+    {
+        // derive the theme from the underlying color, if possible
+        MobileUIPrivate::statusbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
+        setTheme_statusbar(MobileUIPrivate::statusbarTheme);
+    }
 }
 
 void MobileUIPrivate::setTheme_statusbar(const MobileUI::Theme theme)
