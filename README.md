@@ -4,11 +4,14 @@ MobileUI allows QML applications to interact with Mobile specific features, like
 
 You can see it in action in the [MobileUI demo](https://github.com/emericg/MobileUI_demo).
 
-> Supports Qt6 (6.5+) with CMake and QMake.
+> Supports Qt6.8+ with CMake.
 
-> Supports iOS 11+ (tested up to iOS 17.7 devices).
+> Supports iOS 16+. Tested up to iOS 17.7 devices.
 
-> Supports Android 5+ (API 21) (tested up to Android 16 (API 36) devices).
+> Supports Android 9+ (API 28). Tested up to Android 16 (API 36) devices.
+
+> [!IMPORTANT]
+> If you need QMake build system, or support for Qt5 / earlier Qt6 version, you can still use the **LEGACY** 'v0' branch.
 
 ## Features
 
@@ -31,19 +34,18 @@ You can see it in action in the [MobileUI demo](https://github.com/emericg/Mobil
 ### Build
 
 To get started, simply checkout the MobileUI repository as a submodule, or copy the
-MobileUI directory into your project, then include the library files with either:
-
-- The `CMakeLists.txt` CMake project file
+MobileUI directory into your project, then include the `CMakeLists.txt` CMake project file:
 
 ```cmake
 add_subdirectory(MobileUI/)
-target_link_libraries(${PROJECT_NAME} MobileUI::MobileUI)
+target_link_libraries(${PROJECT_NAME} PRIVATE MobileUI MobileUI_plugin)
 ```
 
-- The `MobileUI.pro` QMake project file
+You might need some hacks so the QML Language Server recognize the MobileUI module:
 
-```qmake
-include(MobileUI/MobileUI.pri)
+```cmake
+set(QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/MobileUI/" CACHE STRING "QML Modules import paths" FORCE)
+set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 ```
 
 ### Use
@@ -79,8 +81,6 @@ import MobileUI
 
 Window {
     MobileUI {
-        id: mobileUI
-
         statusbarColor: "white"
         statusbarTheme: MobileUI.Light
         navbarColor: "white"
@@ -101,21 +101,13 @@ Window {
 You'll see the window beeing resized (more or less the size of the status bar), and the status bar changing color, usually to black, but you might be lucky and
 get a light grey depending on your device. It's bad if you're coming from a white splash screen, seeing a black bar appear, and going to a white application background...
 
-- The infamous "white bar" bug (a white line visible between the Android status bar and the Qt appliation content) make the "regular" window mode pretty much useless (pre Qt 6.7).
-
-- Screen rotation is mostly broken (pre Qt 6.7).
-
-- Keyboard always appears when an application is brought back to the foreground if `android:windowSoftInputMode="adjustResize"` is set in the manifest (Qt 6.7).
-
-- Keyboard doesn't resize/adjust the app view when appearing. (Qt 6.7).
-
 - Switching dynamically between the three window modes is very glitchy, and not advised. Especially between the "regular" mode and the other twos.
 
 - When using the "Regular with transparent bars" window mode, screen rotation will break presentation if no status bar color has been set. Setting a transparent color seems to be enough to fix the issue.
 
-- When using Qt 6.9 / 6.10, Qt has introduced its own "SafeArea" system. Because it's still fairly buggy, I would advise not to use it yet, and for that you'll need to use regular `Window` instead of `ApplicationWindow` QML item.
+- When using Qt 6.9+, Qt has introduced its own "SafeArea" system. Because it's still fairly buggy, and not really powerful enough to match MobileUI features, I would advise not to use it just yet, and for that you'll need to use regular `Window` instead of `ApplicationWindow` QML item.
 
-All in all, window modes, geometry, rotation and many smaller things are just **very** buggy on Android, and subtly broken depending on which Qt version is used.
+All in all, window modes, geometry, rotation and many smaller things are just buggy on Qt for Android, and subtly broken depending on which Qt version is used. Using only Qt 6.8 and up helps a lot.
 
 ## Quick documentation
 
