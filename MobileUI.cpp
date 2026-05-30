@@ -27,13 +27,13 @@
 #include <QGuiApplication>
 #include <QQmlEngine>
 #include <QScreen>
+#include <QWindow>
+#include <QTimer>
 
 /* ************************************************************************** */
 
 bool MobileUI::isPhone = false;
 bool MobileUI::isTablet = false;
-
-bool MobileUIPrivate::areRefreshSlotsConnected = false;
 
 MobileUI::Theme MobileUIPrivate::deviceTheme = MobileUI::Light;
 
@@ -69,6 +69,10 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
         if (screenSizeInch >= 7.0) MobileUI::isTablet = true;
         else  MobileUI::isPhone = true;
     }
+
+    // The application window doesn't exist yet when this object is created from QML,
+    // so defer the signal hookup and the first safe area computation until the event loop is running.
+    QTimer::singleShot(0, this, [this]() { connectSignals(); refreshSafeAreas(); });
 #endif
 }
 
@@ -149,34 +153,94 @@ void MobileUI::refreshUI()
 
 /* ************************************************************************** */
 
-int MobileUI::getStatusbarHeight()
+void MobileUI::connectSignals()
 {
-    return MobileUIPrivate::getStatusbarHeight();
+    if (m_signalsConnected) return;
+
+    QScreen *screen = qApp->primaryScreen();
+    if (screen)
+    {
+        QObject::connect(screen, &QScreen::orientationChanged,
+                         this, [this](Qt::ScreenOrientation) { refreshSafeAreas(); });
+    }
+
+    const QWindowList windows = qApp->allWindows();
+    QWindow *window = windows.isEmpty() ? nullptr : windows.first();
+    if (window)
+    {
+        QObject::connect(window, &QWindow::visibilityChanged,
+                         this, [this](QWindow::Visibility) { refreshSafeAreas(); });
+    }
+
+    // The OS may reset the native system bar styles/colors when the application
+    // returns to the foreground, so re-apply them when becoming active again.
+    QObject::connect(qApp, &QGuiApplication::applicationStateChanged,
+                     this, [this](Qt::ApplicationState state) { if (state == Qt::ApplicationActive) refreshSafeAreas(); });
+
+    m_signalsConnected = true;
 }
 
-int MobileUI::getNavbarHeight()
+void MobileUI::refreshSafeAreas()
 {
-    return MobileUIPrivate::getNavbarHeight();
+    // Re-apply the native bar colors / themes (lost on rotation or resume)
+    refreshUI();
+    computeSafeAreas();
+
+    // After an orientation or visibility change the native insets and bar sizes are not always settled immediately,
+    // so re-read them a few times with increasing delays until they stabilize.
+    for (int delay : {66, 256, 512, 1024})
+    {
+        QTimer::singleShot(delay, this, [this]() { refreshUI(); computeSafeAreas(); });
+    }
 }
 
-int MobileUI::getSafeAreaTop()
+void MobileUI::computeSafeAreas()
 {
-    return MobileUIPrivate::getSafeAreaTop();
-}
+    int statusbar = MobileUIPrivate::getStatusbarHeight();
+    int navbar = MobileUIPrivate::getNavbarHeight();
+    int top = 0;
+    int left = 0;
+    int right = 0;
+    int bottom = 0;
 
-int MobileUI::getSafeAreaLeft()
-{
-    return MobileUIPrivate::getSafeAreaLeft();
-}
+    const QWindowList windows = qApp->allWindows();
+    QWindow *window = windows.isEmpty() ? nullptr : windows.first();
 
-int MobileUI::getSafeAreaRight()
-{
-    return MobileUIPrivate::getSafeAreaRight();
-}
+    const bool fullscreenMode = (window && window->visibility() == QWindow::FullScreen);
+    const bool maximizedHint = (window && (window->flags() & Qt::MaximizeUsingFullscreenGeometryHint));
 
-int MobileUI::getSafeAreaBottom()
-{
-    return MobileUIPrivate::getSafeAreaBottom();
+    // Safe areas are only meaningful when the window covers the system bars,
+    // i.e. in full screen mode or when using the maximized geometry hint.
+
+    if (fullscreenMode || maximizedHint)
+    {
+        top = MobileUIPrivate::getSafeAreaTop();
+        left = MobileUIPrivate::getSafeAreaLeft();
+        right = MobileUIPrivate::getSafeAreaRight();
+        bottom = MobileUIPrivate::getSafeAreaBottom();
+    }
+
+    // When the window is in full screen mode, the system bars are hidden.
+
+    if (fullscreenMode)
+    {
+        statusbar = 0;
+        navbar = 0;
+    }
+
+    if (statusbar != m_statusbarHeight || navbar != m_navbarHeight ||
+        top != m_safeAreaTop || left != m_safeAreaLeft ||
+        right != m_safeAreaRight || bottom != m_safeAreaBottom)
+    {
+        m_statusbarHeight = statusbar;
+        m_navbarHeight = navbar;
+        m_safeAreaTop = top;
+        m_safeAreaLeft = left;
+        m_safeAreaRight = right;
+        m_safeAreaBottom = bottom;
+
+        Q_EMIT safeAreaUpdated();
+    }
 }
 
 /* ************************************************************************** */
@@ -190,6 +254,10 @@ void MobileUI::setScreenOrientation(const MobileUI::ScreenOrientation orientatio
 {
     MobileUIPrivate::screenOrientation = orientation;
     MobileUIPrivate::setScreenOrientation(orientation);
+
+    // Forcing the screen orientation does not emit QScreen::orientationChanged,
+    // so we refresh the safe areas ourselves
+    MobileUI::getInstance()->refreshSafeAreas();
 }
 
 bool MobileUI::getScreenAlwaysOn()

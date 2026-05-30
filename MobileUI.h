@@ -44,11 +44,11 @@ class MobileUI : public QObject
 
     Q_PROPERTY(QColor statusbarColor READ getStatusbarColor WRITE setStatusbarColor NOTIFY statusbarUpdated)
     Q_PROPERTY(Theme statusbarTheme READ getStatusbarTheme WRITE setStatusbarTheme NOTIFY statusbarUpdated)
-    Q_PROPERTY(int statusbarHeight READ getStatusbarHeight NOTIFY statusbarUpdated)
+    Q_PROPERTY(int statusbarHeight READ getStatusbarHeight NOTIFY safeAreaUpdated)
 
     Q_PROPERTY(QColor navbarColor READ getNavbarColor WRITE setNavbarColor NOTIFY navbarUpdated)
     Q_PROPERTY(Theme navbarTheme READ getNavbarTheme WRITE setNavbarTheme NOTIFY navbarUpdated)
-    Q_PROPERTY(int navbarHeight READ getNavbarHeight NOTIFY navbarUpdated)
+    Q_PROPERTY(int navbarHeight READ getNavbarHeight NOTIFY safeAreaUpdated)
 
     Q_PROPERTY(int safeAreaTop READ getSafeAreaTop NOTIFY safeAreaUpdated)
     Q_PROPERTY(int safeAreaLeft READ getSafeAreaLeft NOTIFY safeAreaUpdated)
@@ -58,6 +58,22 @@ class MobileUI : public QObject
     Q_PROPERTY(bool screenAlwaysOn READ getScreenAlwaysOn WRITE setScreenAlwaysOn NOTIFY screenUpdated)
     Q_PROPERTY(ScreenOrientation screenOrientation READ getScreenOrientation WRITE setScreenOrientation NOTIFY screenUpdated)
     Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenUpdated)
+
+    bool m_signalsConnected = false;
+
+    int m_statusbarHeight = 0;
+    int m_navbarHeight = 0;
+
+    int m_safeAreaTop = 0;
+    int m_safeAreaLeft = 0;
+    int m_safeAreaRight = 0;
+    int m_safeAreaBottom = 0;
+
+    //! Connect to screen orientation and window visibility changes (once).
+    void connectSignals();
+
+    //! Read native bar sizes / safe areas, apply platform fixups, emit on change.
+    void computeSafeAreas();
 
 Q_SIGNALS:
     void devicethemeUpdated();
@@ -70,6 +86,8 @@ public:
     MobileUI(QObject *parent = nullptr);
 
     static void registerQML();
+
+    // Device type /////////////////////////////////////////////////////////////
 
     static bool isPhone;
     static bool isTablet;
@@ -114,13 +132,21 @@ public:
 
     // Screen safe areas ///////////////////////////////////////////////////////
 
-    static int getStatusbarHeight();
-    static int getNavbarHeight();
+    int getStatusbarHeight() const { return m_statusbarHeight; }
+    int getNavbarHeight() const { return m_navbarHeight; }
 
-    static int getSafeAreaTop();
-    static int getSafeAreaLeft();
-    static int getSafeAreaRight();
-    static int getSafeAreaBottom();
+    int getSafeAreaTop() const { return m_safeAreaTop; }
+    int getSafeAreaLeft() const { return m_safeAreaLeft; }
+    int getSafeAreaRight() const { return m_safeAreaRight; }
+    int getSafeAreaBottom() const { return m_safeAreaBottom; }
+
+    /*!
+     * \brief Recompute system bar sizes and screen safe areas.
+     *
+     * This is called automatically whenever the screen orientation or the window
+     * visibility changes, so the exposed properties stay up to date on their own.
+     */
+    Q_INVOKABLE void refreshSafeAreas();
 
     // Screen helpers //////////////////////////////////////////////////////////
 

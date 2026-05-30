@@ -98,6 +98,7 @@ static QJniObject getDisplayCutout()
         // DisplayCutout has been added in API level 28
         QJniObject insets = getAndroidDecorView().callObjectMethod("getRootWindowInsets",
                                                                    "()Landroid/view/WindowInsets;");
+
         QJniObject cutout = insets.callObjectMethod("getDisplayCutout",
                                                     "()Landroid/view/DisplayCutout;");
 
@@ -124,14 +125,6 @@ int MobileUIPrivate::getDeviceTheme()
         .result()
         .toInt();
 }
-
-void MobileUIPrivate::refreshUI_async()
-{
-    MobileUIPrivate::setTheme_statusbar(MobileUIPrivate::statusbarTheme);
-    MobileUIPrivate::setTheme_navbar(MobileUIPrivate::navbarTheme);
-}
-
-/* ************************************************************************** */
 
 void MobileUIPrivate::setColor_statusbar(const QColor &color)
 {
@@ -184,26 +177,6 @@ void MobileUIPrivate::setTheme_statusbar(const MobileUI::Theme theme)
 
             inset.callMethod<void>("setSystemBarsAppearance", "(II)V",
                                    visibility, APPEARANCE_LIGHT_STATUS_BARS);
-
-            if (!MobileUIPrivate::areRefreshSlotsConnected)
-            {
-                QScreen *screen = qApp->primaryScreen();
-                if (screen)
-                {
-                    QObject::connect(screen, &QScreen::orientationChanged,
-                                     qApp, [](Qt::ScreenOrientation) { refreshUI_async(); });
-                }
-
-                QWindowList windows = qApp->allWindows();
-                if (!windows.isEmpty())
-                {
-                    QWindow *window = windows.first();
-                    QObject::connect(window, &QWindow::visibilityChanged,
-                                     qApp, [](QWindow::Visibility) { refreshUI_async(); });
-                }
-
-                MobileUIPrivate::areRefreshSlotsConnected = true;
-            }
         }
     });
 }
@@ -273,26 +246,6 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 
             inset.callMethod<void>("setSystemBarsAppearance", "(II)V",
                                    visibility, APPEARANCE_LIGHT_NAVIGATION_BARS);
-
-            if (!MobileUIPrivate::areRefreshSlotsConnected)
-            {
-                QScreen *screen = qApp->primaryScreen();
-                if (screen)
-                {
-                    QObject::connect(screen, &QScreen::orientationChanged,
-                                     qApp, [](Qt::ScreenOrientation) { refreshUI_async(); });
-                }
-
-                QWindowList windows = qApp->allWindows();
-                if (windows.size() && windows.at(0))
-                {
-                    QWindow *window_qt = windows.at(0);
-                    QObject::connect(window_qt, &QWindow::visibilityChanged,
-                                     qApp, [](QWindow::Visibility) { refreshUI_async(); });
-                }
-
-                MobileUIPrivate::areRefreshSlotsConnected = true;
-            }
         }
     });
 }

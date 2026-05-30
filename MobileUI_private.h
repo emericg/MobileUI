@@ -32,8 +32,6 @@
 class MobileUIPrivate
 {
 public:
-    static bool areRefreshSlotsConnected;
-
     static MobileUI::Theme deviceTheme;
 
     static QColor statusbarColor;
@@ -47,8 +45,6 @@ public:
     static MobileUI::ScreenOrientation screenOrientation;
 
     static int getDeviceTheme();
-
-    static void refreshUI_async();
 
     static void setColor_statusbar(const QColor &color);
     static void setTheme_statusbar(const MobileUI::Theme theme);
