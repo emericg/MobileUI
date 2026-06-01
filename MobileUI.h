@@ -30,12 +30,16 @@
 #include <QObject>
 #include <QColor>
 
+QT_FORWARD_DECLARE_CLASS(QQmlEngine)
+QT_FORWARD_DECLARE_CLASS(QJSEngine)
+
 /* ************************************************************************** */
 
 class MobileUI : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
+    QML_SINGLETON
 
     Q_PROPERTY(Theme deviceTheme READ getDeviceTheme NOTIFY devicethemeUpdated)
 
@@ -59,8 +63,6 @@ class MobileUI : public QObject
     Q_PROPERTY(ScreenOrientation screenOrientation READ getScreenOrientation WRITE setScreenOrientation NOTIFY screenUpdated)
     Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenUpdated)
 
-    bool m_signalsConnected = false;
-
     int m_statusbarHeight = 0;
     int m_navbarHeight = 0;
 
@@ -69,8 +71,12 @@ class MobileUI : public QObject
     int m_safeAreaRight = 0;
     int m_safeAreaBottom = 0;
 
-    //! Connect to screen orientation and window visibility changes (once).
+    //! Connect to screen orientation and window visibility changes.
     void connectSignals();
+
+    // Singleton
+    static MobileUI *instance;
+    MobileUI(QObject *parent = nullptr);
 
 Q_SIGNALS:
     void devicethemeUpdated();
@@ -80,7 +86,21 @@ Q_SIGNALS:
     void screenUpdated();
 
 public:
-    MobileUI(QObject *parent = nullptr);
+    /*!
+     * \brief Get the process-wide MobileUI singleton instance.
+     *
+     * Use this to access the instance (and its cached safe area properties /
+     * signals) from C++. The same instance is shared with QML.
+     */
+    static MobileUI *getInstance();
+
+    /*!
+     * \brief QML singleton factory.
+     *
+     * Called by the QML engine to obtain the MobileUI singleton. It simply
+     * returns getInstance(), so C++ and QML share a single instance.
+     */
+    static MobileUI *create(QQmlEngine *engine, QJSEngine *scriptEngine);
 
     /*!
      * \brief Refresh UI themes/colors and safe areas.

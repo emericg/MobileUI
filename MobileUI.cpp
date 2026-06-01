@@ -33,6 +33,8 @@
 
 /* ************************************************************************** */
 
+MobileUI *MobileUI::instance = nullptr;
+
 bool MobileUI::isPhone = false;
 bool MobileUI::isTablet = false;
 
@@ -49,6 +51,22 @@ bool MobileUIPrivate::screenAlwaysOn = false;
 MobileUI::ScreenOrientation MobileUIPrivate::screenOrientation = MobileUI::Unlocked;
 
 /* ************************************************************************** */
+
+MobileUI *MobileUI::getInstance()
+{
+    if (instance == nullptr)
+    {
+        instance = new MobileUI();
+        QJSEngine::setObjectOwnership(instance, QJSEngine::CppOwnership);
+    }
+
+    return instance;
+}
+
+MobileUI *MobileUI::create(QQmlEngine *, QJSEngine *)
+{
+    return MobileUI::getInstance();
+}
 
 void MobileUI::registerQML()
 {
@@ -71,8 +89,9 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
         else  MobileUI::isPhone = true;
     }
 
-    // The application window doesn't exist yet when this object is created from QML,
-    // so defer the signal hookup and the first safe area computation until the event loop is running.
+    // The application window doesn't exist yet when this object is created from
+    // QML, so defer the signal hookup and the first safe area computation until
+    // the event loop is running. connectSignals() must be called only ONCE.
     QTimer::singleShot(0, this, [this]() { connectSignals(); refreshMobileUI(); });
 #endif
 }
@@ -81,8 +100,6 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
 
 void MobileUI::connectSignals()
 {
-    if (m_signalsConnected) return;
-
     QScreen *screen = qApp->primaryScreen();
     if (screen)
     {
@@ -110,8 +127,6 @@ void MobileUI::connectSignals()
         QObject::connect(hints, &QStyleHints::colorSchemeChanged,
                          this, [this](Qt::ColorScheme) { refreshMobileUI(); });
     }
-
-    m_signalsConnected = true;
 }
 
 /* ************************************************************************** */
