@@ -74,17 +74,6 @@
 
 /* ************************************************************************** */
 
-//! Rec. 601 perceived luminance of a color, normalized to [0.0 ; 1.0]
-static double qColorLuminance(const QColor color)
-{
-    return (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255.0;
-}
-
-static bool isQColorLight(const QColor color)
-{
-    return (qColorLuminance(color) > 0.8);
-}
-
 static QJniObject getAndroidWindow()
 {
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
@@ -182,13 +171,6 @@ void MobileUIPrivate::setColor_statusbar(const QColor &color)
             window.callMethod<void>("addFlags", "(I)V", FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             window.callMethod<void>("clearFlags", "(I)V", FLAG_TRANSLUCENT_STATUS);
             window.callMethod<void>("setStatusBarColor", "(I)V", color.rgba());
-
-            if (color.alpha() > 0)
-            {
-                // automatically derive the theme from the underlying color, if possible
-                MobileUIPrivate::statusbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
-                setTheme_statusbar(MobileUIPrivate::statusbarTheme);
-            }
         }
     });
 }
@@ -238,7 +220,13 @@ void MobileUIPrivate::setColor_navbar(const QColor &color)
             QJniObject window_android = getAndroidWindow();
             QWindow *window_qt = qApp->allWindows().isEmpty() ? nullptr : qApp->allWindows().first();
 
-            if (window_qt && window_qt->flags() & Qt::MaximizeUsingFullscreenGeometryHint)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+            const bool maximizedHint = (window_qt && (window_qt->flags() & Qt::ExpandedClientAreaHint));
+#else
+            const bool maximizedHint = (window_qt && (window_qt->flags() & Qt::MaximizeUsingFullscreenGeometryHint));
+#endif
+
+            if (maximizedHint)
             {
                 // if we try to set the FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag while in fullscreen mode, it will mess everything up
                 window_android.callMethod<void>("addFlags", "(I)V", FLAG_TRANSLUCENT_NAVIGATION);
@@ -250,13 +238,6 @@ void MobileUIPrivate::setColor_navbar(const QColor &color)
                 window_android.callMethod<void>("addFlags", "(I)V", FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
                 window_android.callMethod<void>("clearFlags", "(I)V", FLAG_TRANSLUCENT_NAVIGATION);
                 window_android.callMethod<void>("setNavigationBarColor", "(I)V", color.rgba());
-            }
-
-            if (color.alpha() > 0)
-            {
-                // automatically derive the theme from the underlying color, if possible
-                MobileUIPrivate::navbarTheme = static_cast<MobileUI::Theme>(!isQColorLight(color));
-                setTheme_navbar(MobileUIPrivate::navbarTheme);
             }
         }
     });

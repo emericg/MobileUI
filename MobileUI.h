@@ -26,12 +26,14 @@
 /* ************************************************************************** */
 
 #include <QtQml/qqmlregistration.h>
-
 #include <QObject>
 #include <QColor>
 
-QT_FORWARD_DECLARE_CLASS(QQmlEngine)
-QT_FORWARD_DECLARE_CLASS(QJSEngine)
+#include <memory>
+
+class QQmlEngine;
+class QJSEngine;
+class MobileUIPrivate;
 
 /* ************************************************************************** */
 
@@ -41,10 +43,10 @@ class MobileUI : public QObject
     QML_ELEMENT
     QML_SINGLETON
 
-    Q_PROPERTY(Theme deviceTheme READ getDeviceTheme NOTIFY devicethemeUpdated)
-
     Q_PROPERTY(bool isPhone READ isDevicePhone CONSTANT)
     Q_PROPERTY(bool isTablet READ isDeviceTablet CONSTANT)
+
+    Q_PROPERTY(Theme deviceTheme READ getDeviceTheme NOTIFY devicethemeUpdated)
 
     Q_PROPERTY(QColor statusbarColor READ getStatusbarColor WRITE setStatusbarColor NOTIFY statusbarUpdated)
     Q_PROPERTY(Theme statusbarTheme READ getStatusbarTheme WRITE setStatusbarTheme NOTIFY statusbarUpdated)
@@ -63,20 +65,25 @@ class MobileUI : public QObject
     Q_PROPERTY(ScreenOrientation screenOrientation READ getScreenOrientation WRITE setScreenOrientation NOTIFY screenUpdated)
     Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenUpdated)
 
-    int m_statusbarHeight = 0;
-    int m_navbarHeight = 0;
+public:
+    enum Theme {
+        Light,  //!< Light application theme, usually light background and dark texts.
+        Dark    //!< Dark application theme, usually dark background and light texts.
+    };
+    Q_ENUM(Theme)
 
-    int m_safeAreaTop = 0;
-    int m_safeAreaLeft = 0;
-    int m_safeAreaRight = 0;
-    int m_safeAreaBottom = 0;
+    enum ScreenOrientation {
+        Unlocked = 0,
 
-    //! Connect to screen orientation and window visibility changes.
-    void connectSignals();
+        Portrait            = (1 << 0),
+        Portrait_upsidedown = (1 << 1),
+        Portrait_sensor     = (1 << 2),
 
-    // Singleton
-    static MobileUI *instance;
-    MobileUI(QObject *parent = nullptr);
+        Landscape_left      = (1 << 3),
+        Landscape_right     = (1 << 4),
+        Landscape_sensor    = (1 << 5),
+    };
+    Q_ENUM(ScreenOrientation)
 
 Q_SIGNALS:
     void devicethemeUpdated();
@@ -103,58 +110,46 @@ public:
     static MobileUI *create(QQmlEngine *engine, QJSEngine *scriptEngine);
 
     /*!
-     * \brief Refresh UI themes/colors and safe areas.
-     * \brief Recompute system bar sizes and screen safe areas.
+     * \brief Refresh UI themes/colors and recompute system bar sizes and screen safe areas.
      *
      * This is called automatically whenever the screen orientation or the window
      * visibility changes, so the exposed properties stay up to date on their own.
      */
     Q_INVOKABLE void refreshMobileUI();
 
-    static void registerQML();
-
     // Device type /////////////////////////////////////////////////////////////
 
-    static bool isPhone;
-    static bool isTablet;
-
-    static bool isDevicePhone() { return MobileUI::isPhone; }
-    static bool isDeviceTablet() { return MobileUI::isTablet; }
+    bool isDevicePhone() const { return m_isPhone; }
+    bool isDeviceTablet() const { return m_isTablet; }
 
     // Device theme ////////////////////////////////////////////////////////////
-
-    enum Theme {
-        Light,  //!< Light application theme, usually light background and dark texts.
-        Dark    //!< Dark application theme, usually dark background and light texts.
-    };
-    Q_ENUM(Theme)
 
     /*!
      * \brief Get the theme currently in effect on this device.
      * \return see MobileUI::Theme enum.
      */
-    static MobileUI::Theme getDeviceTheme();
+    MobileUI::Theme getDeviceTheme();
 
     // System bars /////////////////////////////////////////////////////////////
 
     // Status bar
-    static QColor getStatusbarColor();
-    static void setStatusbarColor(const QColor &color);
+    QColor getStatusbarColor() const;
+    void setStatusbarColor(const QColor &color);
 
-    static MobileUI::Theme getStatusbarTheme();
-    static void setStatusbarTheme(const MobileUI::Theme theme);
+    MobileUI::Theme getStatusbarTheme() const;
+    void setStatusbarTheme(const MobileUI::Theme theme);
 
     // Navigation bar
-    static QColor getNavbarColor();
-    static void setNavbarColor(const QColor &color);
+    QColor getNavbarColor() const;
+    void setNavbarColor(const QColor &color);
 
-    static MobileUI::Theme getNavbarTheme();
-    static void setNavbarTheme(const MobileUI::Theme theme);
+    MobileUI::Theme getNavbarTheme() const;
+    void setNavbarTheme(const MobileUI::Theme theme);
 
     /*!
      * \brief Refresh UI statusbar/navigationbar themes/colors.
      */
-    Q_INVOKABLE static void refreshUI();
+    Q_INVOKABLE void refreshSystemBars();
 
     // Screen safe areas ///////////////////////////////////////////////////////
 
@@ -176,24 +171,11 @@ public:
 
     // Screen helpers //////////////////////////////////////////////////////////
 
-    enum ScreenOrientation {
-        Unlocked = 0,
-
-        Portrait            = (1 << 0),
-        Portrait_upsidedown = (1 << 1),
-        Portrait_sensor     = (1 << 2),
-
-        Landscape_left      = (1 << 3),
-        Landscape_right     = (1 << 4),
-        Landscape_sensor    = (1 << 5),
-    };
-    Q_ENUM(ScreenOrientation)
-
     /*!
      * \brief Get orientation lock (if set).
      * \return See MobileUI::ScreenOrientation enum.
      */
-    MobileUI::ScreenOrientation getScreenOrientation();
+    MobileUI::ScreenOrientation getScreenOrientation() const;
 
     /*!
      * \brief Orientation locker.
@@ -204,19 +186,19 @@ public:
      * - https://developer.android.com/guide/topics/manifest/activity-element.html#screen
      * - https://developer.apple.com/documentation/bundleresources/information_property_list/uisupportedinterfaceorientations
      */
-    Q_INVOKABLE static void setScreenOrientation(const MobileUI::ScreenOrientation orientation);
+    Q_INVOKABLE void setScreenOrientation(const MobileUI::ScreenOrientation orientation);
 
     /*!
      * \brief Get screensaver lock (if set).
      * \return on or off.
      */
-    static bool getScreenAlwaysOn();
+    bool getScreenAlwaysOn() const;
 
     /*!
      * \brief Lock screensaver.
      * \param value: on or off.
      */
-    Q_INVOKABLE static void setScreenAlwaysOn(const bool value);
+    Q_INVOKABLE void setScreenAlwaysOn(const bool value);
 
     /*!
      * \brief Get screen brightness set for the current app (on Android) or system wide (on iOS).
@@ -225,13 +207,13 @@ public:
      * If brightness has not been set for the current app, this function will
      * return the OS wide brightness level.
      */
-    static int getScreenBrightness();
+    int getScreenBrightness();
 
     /*!
      * \brief Set screen brightness for the current app (on Android) or system wide (on iOS).
      * \param value: screen brightness, from 0 to 100.
      */
-    Q_INVOKABLE static void setScreenBrightness(const int value);
+    Q_INVOKABLE void setScreenBrightness(const int value);
 
     // Other helpers ///////////////////////////////////////////////////////////
 
@@ -240,7 +222,7 @@ public:
      * \note iPads don't support haptic feedbacks.
      * \note On Android the "android.permission.VIBRATE" must be added to the manifest.
      */
-    Q_INVOKABLE static void vibrate();
+    Q_INVOKABLE void vibrate();
 
     /*!
      * \brief Go back to Android home screen.
@@ -249,7 +231,55 @@ public:
      * back button, which is to kill the application instead of doing what every
      * single Android application does, going back to the home screen...
      */
-    Q_INVOKABLE static void backToHomeScreen();
+    Q_INVOKABLE void backToHomeScreen();
+
+    // Other helpers ///////////////////////////////////////////////////////////
+
+    //! Perceived luminance (Rec. 601), normalized to the [0.0 ; 1.0] range.
+    static double colorLuminance(const QColor &color);
+
+    //! Tell whether a color is perceived as "light".
+    static bool isColorLight_android(const QColor &color);
+    static bool isColorLight_hyperos(const QColor &color);
+
+private:
+    // Device types
+    bool m_isPhone = false;
+    bool m_isTablet = false;
+
+    // OS theme
+    MobileUI::Theme m_osTheme = MobileUI::Light;
+
+    // System bars states
+    QColor m_statusbarColor;
+    MobileUI::Theme m_statusbarTheme = MobileUI::Light;
+
+    QColor m_navbarColor;
+    MobileUI::Theme m_navbarTheme = MobileUI::Light;
+
+    int m_statusbarHeight = 0;
+    int m_navbarHeight = 0;
+
+    // Screen safe areas
+    int m_safeAreaTop = 0;
+    int m_safeAreaLeft = 0;
+    int m_safeAreaRight = 0;
+    int m_safeAreaBottom = 0;
+
+    // Screen states
+    bool m_screenAlwaysOn = false;
+    MobileUI::ScreenOrientation m_screenOrientation = MobileUI::Unlocked;
+
+    //! Connect to screen orientation and window visibility changes.
+    void connectSignals();
+
+    //! Per-platform backend.
+    std::unique_ptr<MobileUIPrivate> d;
+
+    // Singleton
+    static MobileUI *instance;
+    explicit MobileUI(QObject *parent = nullptr);
+    ~MobileUI() override;
 };
 
 /* ************************************************************************** */

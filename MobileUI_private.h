@@ -32,44 +32,35 @@
 class MobileUIPrivate
 {
 public:
-    static MobileUI::Theme deviceTheme;
+    MobileUIPrivate() = default;
+    ~MobileUIPrivate() = default;
 
-    static QColor statusbarColor;
-    static MobileUI::Theme statusbarTheme;
+    int getDeviceTheme();
 
-    static QColor navbarColor;
-    static MobileUI::Theme navbarTheme;
+    void setColor_statusbar(const QColor &color);
+    void setTheme_statusbar(const MobileUI::Theme theme);
 
-    static bool screenAlwaysOn;
+    void setColor_navbar(const QColor &color);
+    void setTheme_navbar(const MobileUI::Theme theme);
 
-    static MobileUI::ScreenOrientation screenOrientation;
+    int getStatusbarHeight();
+    int getNavbarHeight();
 
-    static int getDeviceTheme();
+    int getSafeAreaTop();
+    int getSafeAreaLeft();
+    int getSafeAreaRight();
+    int getSafeAreaBottom();
 
-    static void setColor_statusbar(const QColor &color);
-    static void setTheme_statusbar(const MobileUI::Theme theme);
+    void setScreenAlwaysOn(const bool on);
 
-    static void setColor_navbar(const QColor &color);
-    static void setTheme_navbar(const MobileUI::Theme theme);
+    void setScreenOrientation(const MobileUI::ScreenOrientation orientation);
 
-    static int getStatusbarHeight();
-    static int getNavbarHeight();
+    int getScreenBrightness();
+    void setScreenBrightness(const int value);
 
-    static int getSafeAreaTop();
-    static int getSafeAreaLeft();
-    static int getSafeAreaRight();
-    static int getSafeAreaBottom();
+    void vibrate();
 
-    static void setScreenAlwaysOn(const bool on);
-
-    static void setScreenOrientation(const MobileUI::ScreenOrientation orientation);
-
-    static int getScreenBrightness();
-    static void setScreenBrightness(const int value);
-
-    static void vibrate();
-
-    static void backToHomeScreen();
+    void backToHomeScreen();
 };
 
 /* ************************************************************************** */
