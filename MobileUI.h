@@ -72,9 +72,6 @@ class MobileUI : public QObject
     //! Connect to screen orientation and window visibility changes (once).
     void connectSignals();
 
-    //! Read native bar sizes / safe areas, apply platform fixups, emit on change.
-    void computeSafeAreas();
-
 Q_SIGNALS:
     void devicethemeUpdated();
     void statusbarUpdated();
@@ -84,6 +81,15 @@ Q_SIGNALS:
 
 public:
     MobileUI(QObject *parent = nullptr);
+
+    /*!
+     * \brief Refresh UI themes/colors and safe areas.
+     * \brief Recompute system bar sizes and screen safe areas.
+     *
+     * This is called automatically whenever the screen orientation or the window
+     * visibility changes, so the exposed properties stay up to date on their own.
+     */
+    Q_INVOKABLE void refreshMobileUI();
 
     static void registerQML();
 

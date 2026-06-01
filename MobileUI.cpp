@@ -25,6 +25,7 @@
 #include "MobileUI_private.h"
 
 #include <QGuiApplication>
+#include <QStyleHints>
 #include <QQmlEngine>
 #include <QScreen>
 #include <QWindow>
@@ -72,8 +73,63 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
 
     // The application window doesn't exist yet when this object is created from QML,
     // so defer the signal hookup and the first safe area computation until the event loop is running.
-    QTimer::singleShot(0, this, [this]() { connectSignals(); refreshSafeAreas(); });
+    QTimer::singleShot(0, this, [this]() { connectSignals(); refreshMobileUI(); });
 #endif
+}
+
+/* ************************************************************************** */
+
+void MobileUI::connectSignals()
+{
+    if (m_signalsConnected) return;
+
+    QScreen *screen = qApp->primaryScreen();
+    if (screen)
+    {
+        QObject::connect(screen, &QScreen::orientationChanged,
+                         this, [this](Qt::ScreenOrientation) { refreshMobileUI(); });
+    }
+
+    const QWindowList windows = qApp->allWindows();
+    QWindow *window = windows.isEmpty() ? nullptr : windows.first();
+    if (window)
+    {
+        QObject::connect(window, &QWindow::visibilityChanged,
+                         this, [this](QWindow::Visibility) { refreshMobileUI(); });
+    }
+
+    // The OS may reset the native system bar styles/colors when the application
+    // returns to the foreground, so we re-apply them when becoming active again.
+    QObject::connect(qApp, &QGuiApplication::applicationStateChanged,
+                     this, [this](Qt::ApplicationState state) { if (state == Qt::ApplicationActive) refreshSafeAreas(); });
+
+    // A light/dark mode change does not emit orientationChanged/visibilityChanged,
+    // so make sure we re-apply our settings.
+    if (QStyleHints *hints = qApp->styleHints())
+    {
+        QObject::connect(hints, &QStyleHints::colorSchemeChanged,
+                         this, [this](Qt::ColorScheme) { refreshMobileUI(); });
+    }
+
+    m_signalsConnected = true;
+}
+
+/* ************************************************************************** */
+
+void MobileUI::refreshMobileUI()
+{
+    // Re-apply the native bar colors / themes (lost on rotation or resume)
+    refreshUI();
+
+    // Re-compute safe areas (changed on rotation)
+    refreshSafeAreas();
+
+    // After an orientation or visibility change the native insets and bar sizes are not always settled immediately,
+    // so re-read them a few times with increasing delays until they stabilize.
+    for (int delay : {66, 256, 512, 1024})
+    {
+        QTimer::singleShot(delay, this, [this]() { refreshUI(); refreshSafeAreas(); });
+    }
 }
 
 /* ************************************************************************** */
@@ -153,48 +209,7 @@ void MobileUI::refreshUI()
 
 /* ************************************************************************** */
 
-void MobileUI::connectSignals()
-{
-    if (m_signalsConnected) return;
-
-    QScreen *screen = qApp->primaryScreen();
-    if (screen)
-    {
-        QObject::connect(screen, &QScreen::orientationChanged,
-                         this, [this](Qt::ScreenOrientation) { refreshSafeAreas(); });
-    }
-
-    const QWindowList windows = qApp->allWindows();
-    QWindow *window = windows.isEmpty() ? nullptr : windows.first();
-    if (window)
-    {
-        QObject::connect(window, &QWindow::visibilityChanged,
-                         this, [this](QWindow::Visibility) { refreshSafeAreas(); });
-    }
-
-    // The OS may reset the native system bar styles/colors when the application
-    // returns to the foreground, so re-apply them when becoming active again.
-    QObject::connect(qApp, &QGuiApplication::applicationStateChanged,
-                     this, [this](Qt::ApplicationState state) { if (state == Qt::ApplicationActive) refreshSafeAreas(); });
-
-    m_signalsConnected = true;
-}
-
 void MobileUI::refreshSafeAreas()
-{
-    // Re-apply the native bar colors / themes (lost on rotation or resume)
-    refreshUI();
-    computeSafeAreas();
-
-    // After an orientation or visibility change the native insets and bar sizes are not always settled immediately,
-    // so re-read them a few times with increasing delays until they stabilize.
-    for (int delay : {66, 256, 512, 1024})
-    {
-        QTimer::singleShot(delay, this, [this]() { refreshUI(); computeSafeAreas(); });
-    }
-}
-
-void MobileUI::computeSafeAreas()
 {
     int statusbar = MobileUIPrivate::getStatusbarHeight();
     int navbar = MobileUIPrivate::getNavbarHeight();
@@ -257,7 +272,7 @@ void MobileUI::setScreenOrientation(const MobileUI::ScreenOrientation orientatio
 
     // Forcing the screen orientation does not emit QScreen::orientationChanged,
     // so we refresh the safe areas ourselves
-    MobileUI::getInstance()->refreshSafeAreas();
+    MobileUI::getInstance()->refreshMobileUI();
 }
 
 bool MobileUI::getScreenAlwaysOn()
