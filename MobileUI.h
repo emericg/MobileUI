@@ -30,9 +30,6 @@
 #include <QColor>
 
 #include <memory>
-
-class QQmlEngine;
-class QJSEngine;
 class MobileUIPrivate;
 
 /* ************************************************************************** */
@@ -93,6 +90,7 @@ Q_SIGNALS:
 
 public:
     MobileUI(QObject *parent = nullptr);
+    ~MobileUI() override;
 
     /*!
      * \brief Refresh UI themes/colors and safe areas.
@@ -261,11 +259,6 @@ private:
 
     //! Per-platform backend.
     std::unique_ptr<MobileUIPrivate> d;
-
-    // Singleton
-    static MobileUI *instance;
-    explicit MobileUI(QObject *parent = nullptr);
-    ~MobileUI() override;
 };
 
 /* ************************************************************************** */

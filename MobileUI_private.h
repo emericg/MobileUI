@@ -33,7 +33,6 @@ class MobileUIPrivate
 {
 public:
     MobileUIPrivate() = default;
-    ~MobileUIPrivate() = default;
 
     int getDeviceTheme();
 

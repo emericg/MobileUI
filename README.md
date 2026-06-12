@@ -2,16 +2,16 @@
 
 MobileUI allows QML applications to interact with Mobile specific features, like Android and iOS `status bar` and Android `navigation bar`.
 
-You can see it in action in the [MobileUI demo](https://github.com/emericg/MobileUI_demo).
+You can see it in action in the [MobileUI demo](https://github.com/emericg/MobileUI_demo/tree/v1).
+
+> [!IMPORTANT]
+> This is the **LEGACY** 'v1' branch, with modern architecture and requirements (Qt 6.8+ and CMake) but **without the QML singleton** for MobileUI. It could help you migrate your application from an older MobileUI version.
 
 > Supports Qt6.8+ with CMake.
 
 > Supports iOS 16+. Tested up to iOS 17.7 devices.
 
 > Supports Android 9+ (API 28). Tested up to Android 16 (API 36) devices.
-
-> [!IMPORTANT]
-> If you need QMake build system, or support for Qt5 / earlier Qt6 version, you can still use the **LEGACY** 'v0' branch.
 
 
 ## Features
@@ -51,50 +51,21 @@ set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 ### Use
 
-MobileUI is a QML singleton, so it is registered automatically by the QML engine.
+MobileUI is a QML module, so it is registered automatically by the QML engine.
 
 ```qml
 import QtQuick
 import MobileUI
 
 Window { // Do not use ApplicationWindow, or you'll get Qt inferior safe area implementation!
+    MobileUI {
+        id: mobileUI
 
-    Component.onCompleted: {
-        MobileUI.statusbarColor = "red"
-        MobileUI.statusbarTheme = MobileUI.Dark
-    
-        MobileUI.navbarColor = "blue"
-        MobileUI.navbarTheme = MobileUI.Dark
+        statusbarColor: "white"
+        statusbarTheme: MobileUI.Light
+        navbarColor: "white"
+        navbarTheme: MobileUI.Light
     }
-
-    Rectangle {
-        anchors.left: parent.left
-        anchors.leftMargin: MobileUI.safeAreaLeft
-        anchors.right: parent.right
-        anchors.rightMargin: MobileUI.safeAreaRight
-
-        height: 333
-        color: "purple"
-    }
-}
-```
-
-You can also use MobileUI directly from C++ code if you want.
-
-```cpp
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
-#include <MobileUI>
-
-int main() {
-    QGuiApplication app();
-
-    MobileUI::getInstance()->setStatusbarColor("white");
-
-    QQmlApplicationEngine engine;
-    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
-
-    return app.exec();
 }
 ```
 

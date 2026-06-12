@@ -36,14 +36,6 @@
 
 /* ************************************************************************** */
 
-void MobileUI::registerQML()
-{
-    qRegisterMetaType<MobileUI::Theme>("MobileUI::Theme");
-    qRegisterMetaType<MobileUI::ScreenOrientation>("MobileUI::ScreenOrientation");
-}
-
-/* ************************************************************************** */
-
 MobileUI::MobileUI(QObject *parent) : QObject(parent), d(std::make_unique<MobileUIPrivate>())
 {
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -76,8 +68,6 @@ MobileUI::~MobileUI() = default;
 
 void MobileUI::connectSignals()
 {
-    if (m_signalsConnected) return;
-
     QScreen *screen = qApp->primaryScreen();
     if (screen)
     {
@@ -105,8 +95,6 @@ void MobileUI::connectSignals()
         QObject::connect(hints, &QStyleHints::colorSchemeChanged,
                          this, [this](Qt::ColorScheme) { refreshMobileUI(); getDeviceTheme(); Q_EMIT devicethemeUpdated(); });
     }
-
-    m_signalsConnected = true;
 }
 
 /* ************************************************************************** */
