@@ -4,14 +4,18 @@ MobileUI allows QML applications to interact with Mobile specific features, like
 
 You can see it in action in the [MobileUI demo](https://github.com/emericg/MobileUI_demo).
 
-> Supports Qt6.8+ with CMake.
+> Supports Qt 6.8+ with CMake.
 
 > Supports iOS 16+. Tested up to iOS 17.7 devices.
 
 > Supports Android 9+ (API 28). Tested up to Android 16 (API 36) devices.
 
 > [!IMPORTANT]
-> If you need QMake build system, or support for Qt5 / earlier Qt6 version, you can still use the **LEGACY** 'v0' branch.
+> If you want the modern architecture but without the QML singleton for MobileUI, you can still use the **LEGACY** 'v1' branch.  
+> It could help you migrate your application from an older MobileUI version. Same requirements (Qt 6.8+ and CMake).  
+
+> [!IMPORTANT]
+> If you need a QMake build system, or support for Qt5 / earlier Qt6 version, you can still use the **LEGACY** 'v0' branch.  
 
 
 ## Features
@@ -57,8 +61,10 @@ MobileUI is a QML singleton, so it is registered automatically by the QML engine
 import QtQuick
 import MobileUI
 
-Window { // Do not use ApplicationWindow, or you'll get Qt inferior safe area implementation!
+// Do not use ApplicationWindow, or you'll get Qt inferior safe area implementation!
+Window {
 
+    // EITHER set the variables declaratively
     Component.onCompleted: {
         MobileUI.statusbarColor = "red"
         MobileUI.statusbarTheme = MobileUI.Dark
@@ -66,7 +72,23 @@ Window { // Do not use ApplicationWindow, or you'll get Qt inferior safe area im
         MobileUI.navbarColor = "blue"
         MobileUI.navbarTheme = MobileUI.Dark
     }
+    
+    // OR use bindings
+    Binding {
+            target: MobileUI
+            property: "statusbarTheme"
+            value: { return YourTheme.themeStatusbar }
+        }
+        Binding {
+            target: MobileUI
+            property: "navbarColor"
+            value: {
+                if (something) return YourTheme.colorForeground
+                return YourTheme.colorBackground
+            }
+        }
 
+    // Use SafeAreas however you see fit
     Rectangle {
         anchors.left: parent.left
         anchors.leftMargin: MobileUI.safeAreaLeft
@@ -205,7 +227,7 @@ Connections {
     target: Qt.application
     function onStateChanged() {
         case Qt.ApplicationActive:
-            console.log("device theme (%1)".arg(mobileUI.deviceTheme ? "dark" : "light"))
+            console.log("device theme (%1)".arg(MobileUI.deviceTheme ? "dark" : "light"))
             break
     }
 }
@@ -247,8 +269,8 @@ safeAreaTop and safeAreaBottom will integrate the system bar height if needed.
 Either call `setScreenAlwaysOn(true/false)` or set `screenAlwaysOn: true/false` (in QML) to disable/re-enable the device screensaver.
 
 ```qml
-mobileUI.setScreenAlwaysOn(true)
-mobileUI.screenAlwaysOn: true
+MobileUI.setScreenAlwaysOn(true)
+MobileUI.screenAlwaysOn: true
 ```
 
 ### Set screen orientation
@@ -259,8 +281,8 @@ This cannot be used to read the actual device orientation.
 Either call `setScreenOrientation(MobileUI.ScreenOrientation)` or set `screenOrientation: MobileUI.ScreenOrientation` (in QML).
 
 ```qml
-mobileUI.setScreenOrientation(MobileUI.Landscape_left)
-mobileUI.screenOrientation: MobileUI.Landscape_right
+MobileUI.setScreenOrientation(MobileUI.Landscape_left)
+MobileUI.screenOrientation: MobileUI.Landscape_right
 ```
 
 Available orientations:
@@ -287,8 +309,8 @@ Set screen brightness for the currently running application (on Android) or syst
 Slider {
     from: 0
     to: 100
-    value: mobileUI.screenBrightness
-    onMoved: mobileUI.screenBrightness = value
+    value: MobileUI.screenBrightness
+    onMoved: MobileUI.screenBrightness = value
 }
 ```
 
@@ -299,7 +321,7 @@ Produce a simple haptic feedback, called "notification feedback" on iOS or a "ti
 No model of iPad includes a haptic engine. Android tablets usually have one.
 
 ```qml
-mobileUI.vibrate()
+MobileUI.vibrate()
 ```
 
 ### Back to home screen
@@ -316,7 +338,7 @@ Either use it on your application window 'onClosing' signal:
 onClosing: (close) => {
     if (Qt.platform.os == "android") {
         close.accepted = false
-        mobileUI.backToHomeScreen()
+        MobileUI.backToHomeScreen()
     }
 }
 ```
@@ -325,7 +347,7 @@ Or on an appropriate 'onBackPressed' signal:
 
 ```qml
 Keys.onBackPressed: {
-    mobileUI.backToHomeScreen()
+    MobileUI.backToHomeScreen()
 }
 ```
 
