@@ -57,7 +57,7 @@ set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 ### Use
 
-MobileUI is a QML singleton, so it is registered automatically by the QML engine.
+MobileUI is a proper CMake QML module (and a QML singleton), so it is registered automatically by the QML engine.
 
 ```qml
 import QtQuick
