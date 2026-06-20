@@ -477,11 +477,13 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
     else if (orientation == MobileUI::Landscape_right) value = 8; // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
     else if (orientation == MobileUI::Landscape_sensor) value = 6; // SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([value]() {
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
     if (activity.isValid())
     {
         activity.callMethod<void>("setRequestedOrientation", "(I)V", value);
     }
+    });
 }
 
 /* ************************************************************************** */
