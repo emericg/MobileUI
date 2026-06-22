@@ -60,7 +60,7 @@
 #define APPEARANCE_LIGHT_STATUS_BARS            0x00000008
 #define APPEARANCE_LIGHT_NAVIGATION_BARS        0x00000010
 #define APPEARANCE_SEMI_TRANSPARENT_STATUS_BARS 0x00000020
-#define APPEARANCE_SEMI_TRANSPARENT_NAVIGATION_BARS 0x0030
+#define APPEARANCE_SEMI_TRANSPARENT_NAVIGATION_BARS 0x0040
 
 #define BEHAVIOR_SHOW_BARS_BY_TOUCH             0x00000000
 #define BEHAVIOR_SHOW_BARS_BY_SWIPE             0x00000001
@@ -486,10 +486,10 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([value]() {
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    if (activity.isValid())
-    {
-        activity.callMethod<void>("setRequestedOrientation", "(I)V", value);
-    }
+        if (activity.isValid())
+        {
+            activity.callMethod<void>("setRequestedOrientation", "(I)V", value);
+        }
     });
 }
 

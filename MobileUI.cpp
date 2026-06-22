@@ -77,7 +77,7 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent), d(std::make_unique<Mobile
 
         refreshSystemBars();
         refreshSafeAreas();
-        getDeviceTheme();
+        updateDeviceTheme();
     });
 #endif
 }
@@ -117,7 +117,7 @@ void MobileUI::connectSignals()
     if (QStyleHints *hints = qApp->styleHints())
     {
         QObject::connect(hints, &QStyleHints::colorSchemeChanged,
-                         this, [this](Qt::ColorScheme) { refreshMobileUI(); getDeviceTheme(); Q_EMIT devicethemeUpdated(); });
+                         this, [this](Qt::ColorScheme) { refreshMobileUI(); updateDeviceTheme(); });
     }
 }
 
@@ -141,9 +141,14 @@ void MobileUI::refreshMobileUI()
 
 /* ************************************************************************** */
 
-MobileUI::Theme MobileUI::getDeviceTheme()
+void MobileUI::updateDeviceTheme()
 {
-    return static_cast<MobileUI::Theme>(d->getDeviceTheme());
+    const MobileUI::Theme theme = static_cast<MobileUI::Theme>(d->getDeviceTheme());
+    if (theme != m_osTheme)
+    {
+        m_osTheme = theme;
+        Q_EMIT devicethemeUpdated();
+    }
 }
 
 /* ************************************************************************** */
@@ -157,6 +162,9 @@ void MobileUI::setStatusbarColor(const QColor &color)
 {
     if (!color.isValid()) return;
 
+    bool changed = (m_statusbarColor != color);
+
+    // we re-apply anyway, and battle with the OS fighting us...
     m_statusbarColor = color;
     d->setColor_statusbar(color);
 
@@ -171,8 +179,11 @@ void MobileUI::setStatusbarColor(const QColor &color)
         {
             m_statusbarTheme = theme;
             d->setTheme_statusbar(theme);
+            changed = true;
         }
     }
+
+    if (changed) Q_EMIT statusbarUpdated();
 }
 
 MobileUI::Theme MobileUI::getStatusbarTheme() const
@@ -182,8 +193,13 @@ MobileUI::Theme MobileUI::getStatusbarTheme() const
 
 void MobileUI::setStatusbarTheme(const MobileUI::Theme theme)
 {
+    const bool changed = (theme != m_statusbarTheme);
+
+    // we re-apply anyway, and battle with the OS fighting us...
     m_statusbarTheme = theme;
     d->setTheme_statusbar(theme);
+
+    if (changed) Q_EMIT statusbarUpdated();
 }
 
 /* ************************************************************************** */
@@ -197,6 +213,9 @@ void MobileUI::setNavbarColor(const QColor &color)
 {
     if (!color.isValid()) return;
 
+    bool changed = (m_navbarColor != color);
+
+    // we re-apply anyway, and battle with the OS fighting us...
     m_navbarColor = color;
     d->setColor_navbar(color);
 
@@ -211,8 +230,11 @@ void MobileUI::setNavbarColor(const QColor &color)
         {
             m_navbarTheme = theme;
             d->setTheme_navbar(theme);
+            changed = true;
         }
     }
+
+    if (changed) Q_EMIT navbarUpdated();
 }
 
 MobileUI::Theme MobileUI::getNavbarTheme() const
@@ -222,8 +244,13 @@ MobileUI::Theme MobileUI::getNavbarTheme() const
 
 void MobileUI::setNavbarTheme(const MobileUI::Theme theme)
 {
+    const bool changed = (theme != m_navbarTheme);
+
+    // we re-apply anyway, and battle with the OS fighting us...
     m_navbarTheme = theme;
     d->setTheme_navbar(theme);
+
+    if (changed) Q_EMIT navbarUpdated();
 }
 
 /* ************************************************************************** */
@@ -293,12 +320,17 @@ MobileUI::ScreenOrientation MobileUI::getScreenOrientation() const
 
 void MobileUI::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
 {
+    const bool changed = (orientation != m_screenOrientation);
+
+    // we re-apply, the OS might have changed that on its own
     m_screenOrientation = orientation;
     d->setScreenOrientation(orientation);
 
     // Forcing the screen orientation does not emit QScreen::orientationChanged,
     // so we refresh the safe areas ourselves
     refreshMobileUI();
+
+    if (changed) Q_EMIT screenUpdated();
 }
 
 bool MobileUI::getScreenAlwaysOn() const
@@ -308,8 +340,13 @@ bool MobileUI::getScreenAlwaysOn() const
 
 void MobileUI::setScreenAlwaysOn(const bool value)
 {
+    const bool changed = (value != m_screenAlwaysOn);
+
+    // we re-apply, the OS might have changed that on its own
     m_screenAlwaysOn = value;
     d->setScreenAlwaysOn(value);
+
+    if (changed) Q_EMIT screenUpdated();
 }
 
 /* ************************************************************************** */
@@ -321,7 +358,13 @@ int MobileUI::getScreenBrightness()
 
 void MobileUI::setScreenBrightness(const int value)
 {
+    const bool changed = (value != m_screenBrightness);
+
+    // we re-apply, the OS might have changed that on its own
+    m_screenBrightness = value;
     d->setScreenBrightness(value);
+
+    if (changed) Q_EMIT screenUpdated();
 }
 
 /* ************************************************************************** */

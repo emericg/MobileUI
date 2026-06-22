@@ -128,7 +128,7 @@ public:
      * \brief Get the theme currently in effect on this device.
      * \return see MobileUI::Theme enum.
      */
-    MobileUI::Theme getDeviceTheme();
+    MobileUI::Theme getDeviceTheme() const { return m_osTheme; }
 
     // System bars /////////////////////////////////////////////////////////////
 
@@ -267,11 +267,15 @@ private:
     int m_safeAreaBottom = 0;
 
     // Screen states
+    int m_screenBrightness = -1;
     bool m_screenAlwaysOn = false;
     MobileUI::ScreenOrientation m_screenOrientation = MobileUI::Unlocked;
 
     //! Connect to screen orientation and window visibility changes.
     void connectSignals();
+
+    //! Read the (actual) device theme from the backend.
+    void updateDeviceTheme();
 
     //! Per-platform backend.
     std::unique_ptr<MobileUIPrivate> d;
