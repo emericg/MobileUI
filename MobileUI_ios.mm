@@ -30,8 +30,6 @@
 
 #include <cmath>
 
-#include <objc/objc.h>
-#include <objc/message.h>
 #include <UIKit/UIKit.h>
 
 /* ************************************************************************** */
@@ -186,13 +184,13 @@ void MobileUIPrivate::setScreenAlwaysOn(const bool on)
 }
 
 void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
-    {
-        // For reference, the values from iOS:
-        // UIInterfaceOrientationMaskAll,               // The view controller supports all interface orientations.
-        // UIInterfaceOrientationMaskAllButUpsideDown,  // The view controller supports all but the upside-down portrait interface orientation.
-        // UIInterfaceOrientationMaskPortrait,          // The view controller supports a portrait interface orientation.
-        // UIInterfaceOrientationMaskPortraitUpsideDown,// The view controller supports an upside-down portrait interface orientation.
-        // UIInterfaceOrientationMaskLandscape,         // The view controller supports both landscape-left and landscape-right interface orientation.
+{
+    // For reference, the values from iOS:
+    // UIInterfaceOrientationMaskAll,               // The view controller supports all interface orientations.
+    // UIInterfaceOrientationMaskAllButUpsideDown,  // The view controller supports all but the upside-down portrait interface orientation.
+    // UIInterfaceOrientationMaskPortrait,          // The view controller supports a portrait interface orientation.
+    // UIInterfaceOrientationMaskPortraitUpsideDown,// The view controller supports an upside-down portrait interface orientation.
+    // UIInterfaceOrientationMaskLandscape,         // The view controller supports both landscape-left and landscape-right interface orientation.
     // UIInterfaceOrientationMaskLandscapeLeft,     // The view controller supports a landscape-left interface orientation.
     // UIInterfaceOrientationMaskLandscapeRight,    // The view controller supports a landscape-right interface orientation.
 
@@ -201,45 +199,33 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
     UIWindowSceneGeometryPreferences *value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskAll];
 
-        if (orientation == MobileUI::Portrait) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
-        else if (orientation == MobileUI::Portrait_upsidedown) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortraitUpsideDown];
-        else if (orientation == MobileUI::Landscape_left) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeLeft];
-        else if (orientation == MobileUI::Landscape_right) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeRight];
-        else if (orientation == MobileUI::Landscape_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscape];
-        // these aren't supported, so we default to regular mode
-        else if (orientation == MobileUI::Portrait_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
+    if (orientation == MobileUI::Portrait) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
+    else if (orientation == MobileUI::Portrait_upsidedown) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortraitUpsideDown];
+    else if (orientation == MobileUI::Landscape_left) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeLeft];
+    else if (orientation == MobileUI::Landscape_right) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeRight];
+    else if (orientation == MobileUI::Landscape_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscape];
+    // these aren't supported, so we default to regular mode
+    else if (orientation == MobileUI::Portrait_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
 
-        [windowScene requestGeometryUpdateWithPreferences:value errorHandler:^(NSError * _Nonnull error) {
-            qDebug() << "Cannot requestGeometryUpdate: unsupported?";
-        }];
+    [windowScene requestGeometryUpdateWithPreferences:value errorHandler:^(NSError * _Nonnull error) {
+        qDebug() << "Cannot requestGeometryUpdate: unsupported?";
+    }];
 }
 
 /* ************************************************************************** */
 
 int MobileUIPrivate::getScreenBrightness()
 {
-    Class uiScreenClass = (Class)objc_getClass("UIScreen");
-    SEL mainScreenSelector = sel_registerName("mainScreen");
-    id mainScreen = ((id(*)(Class, SEL))objc_msgSend)(uiScreenClass, mainScreenSelector);
-
-    SEL brightnessSelector = sel_registerName("brightness");
-    CGFloat brightness = ((CGFloat(*)(id, SEL))objc_msgSend)(mainScreen, brightnessSelector);
-
-    return brightness * 100;
+    return static_cast<int>(std::lround([UIScreen mainScreen].brightness * 100.f));
 }
 
 void MobileUIPrivate::setScreenBrightness(const int value)
 {
-    Class uiScreenClass = (Class)objc_getClass("UIScreen");
-    SEL mainScreenSelector = sel_registerName("mainScreen");
-    id mainScreen = ((id(*)(Class, SEL))objc_msgSend)(uiScreenClass, mainScreenSelector);
-
     float brightness = value / 100.f; // brightness is 0.0 to 1.0
     if (brightness < 0.0f) brightness = 0.0f;
     if (brightness > 1.0f) brightness = 1.0f;
 
-    SEL setBrightnessSelector = sel_registerName("setBrightness:");
-    ((void(*)(id, SEL, CGFloat))objc_msgSend)(mainScreen, setBrightnessSelector, brightness);
+    [UIScreen mainScreen].brightness = brightness;
 }
 
 /* ************************************************************************** */
