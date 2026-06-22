@@ -58,6 +58,17 @@ MobileUI *MobileUI::create(QQmlEngine *, QJSEngine *)
 
 MobileUI::MobileUI(QObject *parent) : QObject(parent), d(std::make_unique<MobileUIPrivate>())
 {
+    // Set up the retry timers used by refreshMobileUI()
+    for (unsigned i = 0; i < 4; ++i)
+    {
+        m_retryTimers[i].setSingleShot(true);
+        m_retryTimers[i].setInterval(m_retryDelays[i]);
+        connect(&m_retryTimers[i], &QTimer::timeout, this, [this]() {
+            refreshSystemBars();
+            refreshSafeAreas();
+        });
+    }
+
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     QScreen *screen = qApp->primaryScreen();
     if (screen)
@@ -69,15 +80,15 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent), d(std::make_unique<Mobile
         else  m_isPhone = true;
     }
 
-    // The application window doesn't exist yet when this object is created from
-    // QML, so defer the signal hookup and the first safe area computation until
-    // the event loop is running. connectSignals() must be called only ONCE.
+    // The application window doesn't exist yet when this object is created from QML,
+    // so we defer the signal hookup and the first safe area computation until the event loop is running.
     QTimer::singleShot(0, this, [this]() {
+        // connectSignals() must be called only ONCE
         connectSignals();
 
         refreshSystemBars();
         refreshSafeAreas();
-        updateDeviceTheme();
+        refreshDeviceTheme();
     });
 #endif
 }
@@ -117,7 +128,7 @@ void MobileUI::connectSignals()
     if (QStyleHints *hints = qApp->styleHints())
     {
         QObject::connect(hints, &QStyleHints::colorSchemeChanged,
-                         this, [this](Qt::ColorScheme) { refreshMobileUI(); updateDeviceTheme(); });
+                         this, [this](Qt::ColorScheme) { refreshMobileUI(); refreshDeviceTheme(); });
     }
 }
 
@@ -133,15 +144,15 @@ void MobileUI::refreshMobileUI()
 
     // After an orientation or visibility change the native insets and bar sizes are not always settled immediately,
     // so re-read them a few times with increasing delays until they stabilize.
-    for (int delay : {66, 256, 512, 1024})
+    for (unsigned i = 0; i < 4; ++i)
     {
-        QTimer::singleShot(delay, this, [this]() { refreshSystemBars(); refreshSafeAreas(); });
+        m_retryTimers[i].start();
     }
 }
 
 /* ************************************************************************** */
 
-void MobileUI::updateDeviceTheme()
+void MobileUI::refreshDeviceTheme()
 {
     const MobileUI::Theme theme = static_cast<MobileUI::Theme>(d->getDeviceTheme());
     if (theme != m_osTheme)

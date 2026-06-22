@@ -28,6 +28,7 @@
 #include <QtQml/qqmlregistration.h>
 #include <QObject>
 #include <QColor>
+#include <QTimer>
 
 #include <memory>
 
@@ -181,6 +182,11 @@ public:
      * \return see MobileUI::Theme enum.
      */
     MobileUI::Theme getDeviceTheme() const { return m_osTheme; }
+
+    /*!
+     * \brief Read the (actual) device theme from the backend.
+     */
+    Q_INVOKABLE void refreshDeviceTheme();
 
     // System bars /////////////////////////////////////////////////////////////
 
@@ -455,8 +461,17 @@ private:
     //! Connect to screen orientation, window visibility and theme changes.
     void connectSignals();
 
-    //! Read the (actual) device theme from the backend.
-    void updateDeviceTheme();
+    /*!
+     * \brief Restartable retry timers re-setting the system bars / re-reading safe areas as they settle.
+     *
+     * Several signals (orientation, visibility, app-active, color-scheme) usually fire
+     * back-to-back during one rotation or resume.
+     *
+     * Restarting the same set of timers (rather than queuing a fresh batch on every call)
+     * coalesces such a burst into a single settle cascade aligned to the latest change.
+     */
+    QTimer m_retryTimers[4];
+    const int m_retryDelays[4] = {66, 256, 512, 1024};
 
     //! Per-platform backend.
     std::unique_ptr<MobileUIPrivate> d;
