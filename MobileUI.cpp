@@ -160,6 +160,7 @@ QColor MobileUI::getStatusbarColor() const
 
 void MobileUI::setStatusbarColor(const QColor &color)
 {
+    //qDebug() << "MobileUI::setStatusbarColor(" << color.name() << ") luminance:" << colorLuminance(color);
     if (!color.isValid()) return;
 
     bool changed = (m_statusbarColor != color);
@@ -167,8 +168,6 @@ void MobileUI::setStatusbarColor(const QColor &color)
     // we re-apply anyway, and battle with the OS fighting us...
     m_statusbarColor = color;
     d->setColor_statusbar(color);
-
-    //qDebug() << "MobileUI::setStatusbarColor(" << color.name() << ") luminance:" << colorLuminance(color);
 
     // Automatically derive a theme from the underlying color
     // If transparent, that responsability is best left to the user
@@ -211,6 +210,7 @@ QColor MobileUI::getNavbarColor() const
 
 void MobileUI::setNavbarColor(const QColor &color)
 {
+    //qDebug() << "MobileUI::setNavbarColor(" << color.name() << ") luminance:" << colorLuminance(color);
     if (!color.isValid()) return;
 
     bool changed = (m_navbarColor != color);
@@ -218,8 +218,6 @@ void MobileUI::setNavbarColor(const QColor &color)
     // we re-apply anyway, and battle with the OS fighting us...
     m_navbarColor = color;
     d->setColor_navbar(color);
-
-    //qDebug() << "MobileUI::setNavbarColor(" << color.name() << ") luminance:" << colorLuminance(color);
 
     // Automatically derive a theme from the underlying color
     // If transparent, that responsability is best left to the user

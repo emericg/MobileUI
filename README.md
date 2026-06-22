@@ -156,7 +156,7 @@ Window {
 
 - The status bar is transparent on iOS, and you can choose the theme. Your application can draw a bar "manually" to visualize it.
 - The status bar is transparent on Android, and you can choose the theme. Your application can draw a bar "manually" to visualize it, or force a system bar color (it will be drawn above everyting).
-- The navigation bar is transparent on Android, and you can choose the theme. MobileUI will prevent you from forcing a color, because that would change the windows mode back to "regular", but not really.
+- The navigation bar is transparent on Android, and you can choose the theme. On Android 15+ (API 35+) forcing a navigation bar color has no effect (the call is a no-op), as that would conflict with the mandatory edge-to-edge mode. On older API levels the color is still applied through a translucent flag.
 - Available geometry is the full screen, including what's behind system bars.
 
 That is the default mode on iOS. This is the mandatory default on Android 15+ (API 35+).
@@ -178,15 +178,15 @@ Window {
 - No system bars drawn at all.
 - Available geometry is the full screen.
 
-### Settings colors and theme
+### Setting colors and theme
 
 > statusbarColor
 
 Set the status bar color (if available).
 
-This is a QColor, so you can use a hexadecimal value "`#fff"` or even a named color `"red"`. And you can use `"transparent"` too.
+This is a QColor, so you can use a hexadecimal value `"#fff"` or even a named color `"red"`. And you can use `"transparent"` too.
 
-Settings a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.
+Setting a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.
 
 > statusbarTheme
 
@@ -203,9 +203,9 @@ On iOS and Android API 28+, the theme must be set each time the window visibilit
 
 Set the navigation bar color (if available).
 
-This is a QColor, so you can use a hexadecimal value "`#fff"` or even a named color `"red"`. And you can use `"transparent"` too.
+This is a QColor, so you can use a hexadecimal value `"#fff"` or even a named color `"red"`. And you can use `"transparent"` too.
 
-Settings a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.
+Setting a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.
 
 > navbarTheme
 
@@ -228,9 +228,9 @@ so it may be wise to only check this value when the application is loading or br
 Connections {
     target: Qt.application
     function onStateChanged() {
-        case Qt.ApplicationActive:
+        if (Qt.application.state === Qt.ApplicationActive) {
             console.log("device theme (%1)".arg(MobileUI.deviceTheme ? "dark" : "light"))
-            break
+        }
     }
 }
 ```
@@ -273,7 +273,7 @@ Either call `setScreenAlwaysOn(true/false)` or set `screenAlwaysOn: true/false` 
 
 ```qml
 MobileUI.setScreenAlwaysOn(true)
-MobileUI.screenAlwaysOn: true
+MobileUI.screenAlwaysOn = true
 ```
 
 ### Set screen orientation
@@ -285,7 +285,7 @@ Either call `setScreenOrientation(MobileUI.ScreenOrientation)` or set `screenOri
 
 ```qml
 MobileUI.setScreenOrientation(MobileUI.Landscape_left)
-MobileUI.screenOrientation: MobileUI.Landscape_right
+MobileUI.screenOrientation = MobileUI.Landscape_right
 ```
 
 Available orientations:
@@ -296,17 +296,19 @@ Available orientations:
 
 > Portrait_upsidedown // only available on Android?
 
-> Portrait_sensor // only available on Android
+> Portrait_sensor // on iOS, falls back to a fixed Portrait
 
 > Landscape_left
 
 > Landscape_right
 
-> Landscape_sensor // only available on Android
+> Landscape_sensor // on iOS, allows both landscape orientations
 
 ### Set screen brightness
 
 Set screen brightness for the currently running application (on Android) or system wide (on iOS).
+
+Brightness is expressed from 0 to 100. Reading it returns -1 when brightness is unavailable.
 
 ```qml
 Slider {
