@@ -559,42 +559,55 @@ void MobileUIPrivate::setScreenBrightness(const int value)
 
 void MobileUIPrivate::vibrate()
 {
-    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
-        QJniObject activity = QNativeInterface::QAndroidApplication::context();
-        if (activity.isValid())
+    QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    if (!activity.isValid()) return;
+
+    QJniObject vibrator;
+    if (QNativeInterface::QAndroidApplication::sdkVersion() >= 31)
+    {
+        // vibrator_manager // Added in API level 31
+
+        QJniObject name = QJniObject::fromString("vibrator_manager");
+        QJniObject manager = activity.callObjectMethod("getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;",
+                                                       name.object<jstring>());
+        if (manager.isValid())
         {
-            QJniObject vibratorString = QJniObject::fromString("vibrator");
-            QJniObject vibratorService = activity.callObjectMethod("getSystemService",
-                                                                   "(Ljava/lang/String;)Ljava/lang/Object;",
-                                                                   vibratorString.object<jstring>());
-            if (vibratorService.callMethod<jboolean>("hasVibrator", "()Z"))
-            {
-                if (QNativeInterface::QAndroidApplication::sdkVersion() >= 26)
-                {
-                    // vibrate(VibrationEffect vibe) // Added in API level 26
-
-                    // effects available: EFFECT_TICK, EFFECT_CLICK, EFFECT_HEAVY_CLICK, EFFECT_DOUBLE_CLICK
-                    jint effect = EFFECT_TICK;
-
-                    QJniObject vibrationEffect = QJniObject::callStaticObjectMethod("android/os/VibrationEffect",
-                                                                                    "createPredefined",
-                                                                                    "(I)Landroid/os/VibrationEffect;",
-                                                                                    effect);
-
-                    vibratorService.callMethod<void>("vibrate",
-                                                     "(Landroid/os/VibrationEffect;)V",
-                                                     vibrationEffect.object<jobject>());
-                }
-                else
-                {
-                    // vibrate(long milliseconds) // Deprecated in API level 26
-
-                    jlong ms = 25;
-                    vibratorService.callMethod<void>("vibrate", "(J)V", ms);
-                }
-            }
+            vibrator = manager.callObjectMethod("getDefaultVibrator", "()Landroid/os/Vibrator;");
         }
-    });
+    }
+    else
+    {
+        QJniObject name = QJniObject::fromString("vibrator");
+        vibrator = activity.callObjectMethod("getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;",
+                                             name.object<jstring>());
+    }
+
+    if (!vibrator.isValid() || !vibrator.callMethod<jboolean>("hasVibrator", "()Z")) return;
+
+    QJniObject effect;
+    if (QNativeInterface::QAndroidApplication::sdkVersion() >= 29)
+    {
+        // createPredefined() // Added in API level 29
+
+        // a nicer, system-tuned effect (EFFECT_TICK/CLICK/HEAVY_CLICK/DOUBLE_CLICK)
+        effect = QJniObject::callStaticObjectMethod("android/os/VibrationEffect",
+                                                    "createPredefined", "(I)Landroid/os/VibrationEffect;",
+                                                    static_cast<jint>(EFFECT_TICK));
+    }
+    else
+    {
+        // createOneShot() // Added in API level 26
+
+        // a short 25 ms one-shot vibration at the default amplitude
+        effect = QJniObject::callStaticObjectMethod("android/os/VibrationEffect",
+                                                    "createOneShot", "(JI)Landroid/os/VibrationEffect;",
+                                                    static_cast<jlong>(25), static_cast<jint>(DEFAULT_AMPLITUDE));
+    }
+
+    if (effect.isValid())
+    {
+        vibrator.callMethod<void>("vibrate", "(Landroid/os/VibrationEffect;)V", effect.object<jobject>());
+    }
 }
 
 /* ************************************************************************** */
