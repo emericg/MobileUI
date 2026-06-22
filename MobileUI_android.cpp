@@ -74,6 +74,15 @@
 #define EFFECT_HEAVY_CLICK                      0x00000005
 #define EFFECT_TICK                             0x00000002
 
+// Screen orientation
+#define SCREEN_ORIENTATION_UNSPECIFIED         -1
+#define SCREEN_ORIENTATION_LANDSCAPE            0
+#define SCREEN_ORIENTATION_PORTRAIT             1
+#define SCREEN_ORIENTATION_SENSOR_LANDSCAPE     6
+#define SCREEN_ORIENTATION_SENSOR_PORTRAIT      7
+#define SCREEN_ORIENTATION_REVERSE_LANDSCAPE    8
+#define SCREEN_ORIENTATION_REVERSE_PORTRAIT     9
+
 // Screen brightness
 #define BRIGHTNESS_OVERRIDE_NONE               -1
 
@@ -174,7 +183,6 @@ int MobileUIPrivate::getDeviceTheme()
 void MobileUIPrivate::setColor_statusbar(const QColor &color)
 {
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
-
         if (QNativeInterface::QAndroidApplication::sdkVersion() < 35)
         {
             // setStatusBarColor // Added in API level 21 // Deprecated in API level 35
@@ -478,17 +486,17 @@ void MobileUIPrivate::setScreenAlwaysOn(const bool on)
 
 void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
 {
-    int value = -1; // SCREEN_ORIENTATION_UNSPECIFIED
+    int value = SCREEN_ORIENTATION_UNSPECIFIED;
 
-    if (orientation == MobileUI::Portrait) value = 1; // SCREEN_ORIENTATION_PORTRAIT
-    else if (orientation == MobileUI::Portrait_upsidedown) value = 9; // SCREEN_ORIENTATION_REVERSE_PORTRAIT
-    else if (orientation == MobileUI::Portrait_sensor) value = 7; // SCREEN_ORIENTATION_SENSOR_PORTRAIT
-    else if (orientation == MobileUI::Landscape_left) value = 0; // SCREEN_ORIENTATION_LANDSCAPE
-    else if (orientation == MobileUI::Landscape_right) value = 8; // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-    else if (orientation == MobileUI::Landscape_sensor) value = 6; // SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    if (orientation == MobileUI::Portrait) value = SCREEN_ORIENTATION_PORTRAIT;
+    else if (orientation == MobileUI::Portrait_upsidedown) value = SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+    else if (orientation == MobileUI::Portrait_sensor) value = SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+    else if (orientation == MobileUI::Landscape_left) value = SCREEN_ORIENTATION_LANDSCAPE;
+    else if (orientation == MobileUI::Landscape_right) value = SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+    else if (orientation == MobileUI::Landscape_sensor) value = SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
 
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([value]() {
-    QJniObject activity = QNativeInterface::QAndroidApplication::context();
+        QJniObject activity = QNativeInterface::QAndroidApplication::context();
         if (activity.isValid())
         {
             activity.callMethod<void>("setRequestedOrientation", "(I)V", value);
@@ -509,9 +517,7 @@ int MobileUIPrivate::getScreenBrightness()
 
             // Otherwise, fall back to the OS-wide brightness
             // Settings.System.SCREEN_BRIGHTNESS is an integer in [0, 255].
-
             constexpr jint brightnessUnavailable = BRIGHTNESS_OVERRIDE_NONE;
-
             QJniObject activity = QNativeInterface::QAndroidApplication::context();
             QJniObject contentResolver = activity.callObjectMethod("getContentResolver", "()Landroid/content/ContentResolver;");
             QJniObject SCREEN_BRIGHTNESS = QJniObject::getStaticObjectField("android/provider/Settings$System",
