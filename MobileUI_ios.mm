@@ -28,6 +28,8 @@
 #include <QWindow>
 #include <QTimer>
 
+#include <cmath>
+
 #include <objc/objc.h>
 #include <objc/message.h>
 #include <UIKit/UIKit.h>
@@ -111,7 +113,7 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 int MobileUIPrivate::getStatusbarHeight()
 {
     CGSize statusBarSize = [[UIApplication sharedApplication] statusBarFrame].size;
-    return MIN(statusBarSize.width, statusBarSize.height);
+    return static_cast<int>(std::lround(MIN(statusBarSize.width, statusBarSize.height)));
 }
 
 int MobileUIPrivate::getNavbarHeight()
@@ -124,7 +126,7 @@ int MobileUIPrivate::getSafeAreaTop()
     if (@available(iOS 11.0, *))
     {
         UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (keyWindow) return keyWindow.safeAreaInsets.top;
+        if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.top));
     }
 
     return 0;
@@ -135,7 +137,7 @@ int MobileUIPrivate::getSafeAreaLeft()
     if (@available(iOS 11.0, *))
     {
         UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (keyWindow) return keyWindow.safeAreaInsets.left;
+        if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.left));
     }
 
     return 0;
@@ -146,7 +148,7 @@ int MobileUIPrivate::getSafeAreaRight()
     if (@available(iOS 11.0, *))
     {
         UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (keyWindow) return keyWindow.safeAreaInsets.right;
+        if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.right));
     }
 
     return 0;
@@ -157,7 +159,7 @@ int MobileUIPrivate::getSafeAreaBottom()
     if (@available(iOS 11.0, *))
     {
         UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (keyWindow) return keyWindow.safeAreaInsets.bottom;
+        if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.bottom));
     }
 
     return 0;

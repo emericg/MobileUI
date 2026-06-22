@@ -30,6 +30,8 @@
 
 #include <QJniObject>
 
+#include <cmath>
+
 /* ************************************************************************** */
 
 // WindowManager.LayoutParams
@@ -137,6 +139,13 @@ static QJniObject getWindowInsetsType(const char *insetType)
     }
 
     return QJniObject();
+}
+
+/* ************************************************************************** */
+
+static int pxToDip(int px)
+{
+    return static_cast<int>(std::lround(px / qApp->devicePixelRatio()));
 }
 
 /* ************************************************************************** */
@@ -289,7 +298,7 @@ int MobileUIPrivate::getStatusbarHeight()
                 if (statusbar.isValid())
                 {
                     // status bar is the top inset; a side-mounted bar in landscape is folded into the left/right safe areas
-                    return statusbar.getField<jint>("top") / qApp->devicePixelRatio();
+                    return pxToDip(statusbar.getField<jint>("top"));
                 }
             }
             else
@@ -311,8 +320,7 @@ int MobileUIPrivate::getStatusbarHeight()
 
                 if (identifier > 0)
                 {
-                    return resources.callMethod<int>("getDimensionPixelSize", "(I)I", identifier)
-                           / qApp->devicePixelRatio();
+                    return pxToDip(resources.callMethod<int>("getDimensionPixelSize", "(I)I", identifier));
                 }
             }
 
@@ -333,7 +341,7 @@ int MobileUIPrivate::getNavbarHeight()
                 if (navbar.isValid())
                 {
                     // navigation bar is the bottom inset; a side-mounted bar in landscape is folded into the left/right safe areas
-                    return navbar.getField<jint>("bottom") / qApp->devicePixelRatio();
+                    return pxToDip(navbar.getField<jint>("bottom"));
                 }
             }
             else
@@ -355,8 +363,7 @@ int MobileUIPrivate::getNavbarHeight()
 
                 if (identifier > 0)
                 {
-                    return resources.callMethod<int>("getDimensionPixelSize", "(I)I", identifier)
-                           / qApp->devicePixelRatio();
+                    return pxToDip(resources.callMethod<int>("getDimensionPixelSize", "(I)I", identifier));
                 }
             }
 
@@ -377,7 +384,7 @@ int MobileUIPrivate::getSafeAreaTop()
                 cutoutInset = cutout.callMethod<int>("getSafeInsetTop", "()I");
             }
 
-           return cutoutInset / qApp->devicePixelRatio();
+           return pxToDip(cutoutInset);
         })
     .result()
     .toInt();
@@ -403,7 +410,7 @@ int MobileUIPrivate::getSafeAreaLeft()
             }
 
             const int inset = (cutoutInset > barInset) ? cutoutInset : barInset;
-            return inset / qApp->devicePixelRatio();
+            return pxToDip(inset);
         })
     .result()
     .toInt();
@@ -429,7 +436,7 @@ int MobileUIPrivate::getSafeAreaRight()
             }
 
             const int inset = (cutoutInset > barInset) ? cutoutInset : barInset;
-            return inset / qApp->devicePixelRatio();
+            return pxToDip(inset);
         })
     .result()
     .toInt();
@@ -446,7 +453,7 @@ int MobileUIPrivate::getSafeAreaBottom()
                 cutoutInset = cutout.callMethod<int>("getSafeInsetBottom", "()I");
             }
 
-            return cutoutInset / qApp->devicePixelRatio();
+            return pxToDip(cutoutInset);
         })
     .result()
     .toInt();
