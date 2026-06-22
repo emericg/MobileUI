@@ -221,6 +221,10 @@ int MobileUIPrivate::getScreenBrightness()
 
 void MobileUIPrivate::setScreenBrightness(const int value)
 {
+    // iOS brightness is system-wide with no per-app override to release,
+    // so a negative value is a no-op (there is nothing to hand back).
+    if (value < 0) return;
+
     float brightness = value / 100.f; // brightness is 0.0 to 1.0
     if (brightness < 0.0f) brightness = 0.0f;
     if (brightness > 1.0f) brightness = 1.0f;

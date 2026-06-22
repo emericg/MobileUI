@@ -319,6 +319,12 @@ Slider {
 }
 ```
 
+Set a negative value to release the override and hand brightness control back to the system. On Android this restores the OS-managed brightness; on iOS there is no per-app override so it does nothing.
+
+```qml
+MobileUI.screenBrightness = -1
+```
+
 ### Haptic feedback
 
 Produce a simple haptic feedback, called "notification feedback" on iOS or a "tick" on Android.

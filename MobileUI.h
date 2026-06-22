@@ -377,7 +377,11 @@ public:
 
     /*!
      * \brief Set screen brightness for the current app (on Android) or system wide (on iOS).
-     * \param value: screen brightness, from 0 to 100. Values are clamped to that range.
+     * \param value: screen brightness, from 0 to 100 (values above 100 are clamped).
+     *
+     * Pass a negative value to release the override:
+     * - On Android the app hands brightness control back to the system
+     * - On iOS there is no per-app override, so this is a no-op.
      */
     Q_INVOKABLE void setScreenBrightness(const int value);
 

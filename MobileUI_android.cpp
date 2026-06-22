@@ -74,6 +74,9 @@
 #define EFFECT_HEAVY_CLICK                      0x00000005
 #define EFFECT_TICK                             0x00000002
 
+// Screen brightness
+#define BRIGHTNESS_OVERRIDE_NONE               -1
+
 /* ************************************************************************** */
 
 static QJniObject getAndroidWindow()
@@ -498,21 +501,30 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 int MobileUIPrivate::getScreenBrightness()
 {
     return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([] {
-            // If we have set a brightness value for the current application
-            QJniObject layoutParams = getAndroidWindow().callObjectMethod( "getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
+            // If a brightness override has been set for the current app window, use it.
+            // screenBrightness is a float in [0.0, 1.0], or -1 when unset.
+            QJniObject layoutParams = getAndroidWindow().callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
             float brightnessApp = layoutParams.getField<jfloat>("screenBrightness");
-            if (brightnessApp >= 0.f) return static_cast<int>(brightnessApp * 100.f);
+            if (brightnessApp >= 0.f) return static_cast<int>(std::lround(brightnessApp * 100.f));
 
-            // Otherwise, we try to read the system wide brightness value
+            // Otherwise, fall back to the OS-wide brightness
+            // Settings.System.SCREEN_BRIGHTNESS is an integer in [0, 255].
+
+            constexpr jint brightnessUnavailable = BRIGHTNESS_OVERRIDE_NONE;
+
             QJniObject activity = QNativeInterface::QAndroidApplication::context();
             QJniObject contentResolver = activity.callObjectMethod("getContentResolver", "()Landroid/content/ContentResolver;");
             QJniObject SCREEN_BRIGHTNESS = QJniObject::getStaticObjectField("android/provider/Settings$System",
                                                                             "SCREEN_BRIGHTNESS", "Ljava/lang/String;");
             jint brightnessOS = QJniObject::callStaticMethod<jint>("android/provider/Settings$System", "getInt",
-                                                                   "(Landroid/content/ContentResolver;Ljava/lang/String;)I",
-                                                                   contentResolver.object(), SCREEN_BRIGHTNESS.object<jstring>());
+                                                                   "(Landroid/content/ContentResolver;Ljava/lang/String;I)I",
+                                                                   contentResolver.object(), SCREEN_BRIGHTNESS.object<jstring>(),
+                                                                   brightnessUnavailable);
 
-            return static_cast<int>((brightnessOS / 255.f) * 100.f); // SCREEN_BRIGHTNESS is 0 to ???
+            if (brightnessOS < 0) return -1; // unavailable
+
+            constexpr float brightnessMax = 255.f;
+            return static_cast<int>(std::lround((brightnessOS / brightnessMax) * 100.f));
         })
     .result()
     .toInt();
@@ -524,9 +536,13 @@ void MobileUIPrivate::setScreenBrightness(const int value)
         QJniObject window = getAndroidWindow();
         QJniObject layoutParams = window.callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
 
-        float brightness = value / 100.f; // screenBrightness is 0.0 to 1.0
-        if (brightness < 0.0f) brightness = 0.0f;
-        if (brightness > 1.0f) brightness = 1.0f;
+        // A negative value releases the app override and hands brightness back to the system.
+        float brightness = BRIGHTNESS_OVERRIDE_NONE;
+        if (value >= 0)
+        {
+            brightness = value / 100.f; // screenBrightness is 0.0 to 1.0
+            if (brightness > 1.0f) brightness = 1.0f;
+        }
 
         layoutParams.setField("screenBrightness", brightness);
         window.callMethod<void>("setAttributes", "(Landroid/view/WindowManager$LayoutParams;)V", layoutParams.object());
