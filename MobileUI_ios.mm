@@ -42,6 +42,30 @@
 @property (nonatomic, assign) UIStatusBarStyle preferredStatusBarStyle;
 @end
 
+/* ************************************************************************** */
+
+// Returns the app's foreground-active window scene, or the first available one.
+static UIWindowScene *activeWindowScene()
+{
+    UIWindowScene *fallback = nil;
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes)
+    {
+        if (![scene isKindOfClass:[UIWindowScene class]]) continue;
+        UIWindowScene *windowScene = (UIWindowScene *)scene;
+        if (windowScene.activationState == UISceneActivationStateForegroundActive) return windowScene;
+        if (!fallback) fallback = windowScene;
+    }
+    return fallback;
+}
+
+// Returns the key window of the active scene.
+static UIWindow *activeKeyWindow()
+{
+    return activeWindowScene().keyWindow;
+}
+
+/* ************************************************************************** */
+
 UIStatusBarStyle statusBarStyle(const MobileUI::Theme theme)
 {
     if (theme == MobileUI::Dark) return UIStatusBarStyleLightContent;
@@ -60,7 +84,7 @@ static void setPreferredStatusBarStyle(UIWindow *window, UIStatusBarStyle style)
 void updatePreferredStatusBarStyle(const MobileUI::Theme theme)
 {
     UIStatusBarStyle style = statusBarStyle(theme);
-    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *keyWindow = activeKeyWindow();
     if (keyWindow) setPreferredStatusBarStyle(keyWindow, style);
 }
 
@@ -68,19 +92,13 @@ void updatePreferredStatusBarStyle(const MobileUI::Theme theme)
 
 int MobileUIPrivate::getDeviceTheme()
 {
-    if (@available(iOS 13.0, *))
+    UIWindow *keyWindow = activeKeyWindow();
+    if (keyWindow.rootViewController.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
     {
-        if ([[[[[UIApplication sharedApplication] keyWindow] rootViewController] traitCollection] userInterfaceStyle] == UIUserInterfaceStyleDark)
-        {
-            return MobileUI::Theme::Dark;
-        }
-        else
-        {
-            return MobileUI::Theme::Light;
-        }
+        return MobileUI::Theme::Dark;
     }
 
-    return 0;
+    return MobileUI::Theme::Light;
 }
 
 void MobileUIPrivate::setColor_statusbar(const QColor &color)
@@ -111,7 +129,8 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 
 int MobileUIPrivate::getStatusbarHeight()
 {
-    CGSize statusBarSize = [[UIApplication sharedApplication] statusBarFrame].size;
+    UIWindowScene *windowScene = activeWindowScene();
+    CGSize statusBarSize = windowScene.statusBarManager.statusBarFrame.size;
     return static_cast<int>(std::lround(MIN(statusBarSize.width, statusBarSize.height)));
 }
 
@@ -122,44 +141,32 @@ int MobileUIPrivate::getNavbarHeight()
 
 int MobileUIPrivate::getSafeAreaTop()
 {
-    if (@available(iOS 11.0, *))
-    {
-        UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.top));
-    }
+    UIWindow *keyWindow = activeKeyWindow();
+    if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.top));
 
     return 0;
 }
 
 int MobileUIPrivate::getSafeAreaLeft()
 {
-    if (@available(iOS 11.0, *))
-    {
-        UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.left));
-    }
+    UIWindow *keyWindow = activeKeyWindow();
+    if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.left));
 
     return 0;
 }
 
 int MobileUIPrivate::getSafeAreaRight()
 {
-    if (@available(iOS 11.0, *))
-    {
-        UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.right));
-    }
+    UIWindow *keyWindow = activeKeyWindow();
+    if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.right));
 
     return 0;
 }
 
 int MobileUIPrivate::getSafeAreaBottom()
 {
-    if (@available(iOS 11.0, *))
-    {
-        UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.bottom));
-    }
+    UIWindow *keyWindow = activeKeyWindow();
+    if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.bottom));
 
     return 0;
 }
@@ -186,15 +193,13 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
         // UIInterfaceOrientationMaskPortrait,          // The view controller supports a portrait interface orientation.
         // UIInterfaceOrientationMaskPortraitUpsideDown,// The view controller supports an upside-down portrait interface orientation.
         // UIInterfaceOrientationMaskLandscape,         // The view controller supports both landscape-left and landscape-right interface orientation.
-        // UIInterfaceOrientationMaskLandscapeLeft,     // The view controller supports a landscape-left interface orientation.
-        // UIInterfaceOrientationMaskLandscapeRight,    // The view controller supports a landscape-right interface orientation.
+    // UIInterfaceOrientationMaskLandscapeLeft,     // The view controller supports a landscape-left interface orientation.
+    // UIInterfaceOrientationMaskLandscapeRight,    // The view controller supports a landscape-right interface orientation.
 
-        UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        if (!keyWindow) return;
-        UIWindowScene *windowScene = keyWindow.windowScene;
-        if (!windowScene) return;
+    UIWindowScene *windowScene = activeWindowScene();
+    if (!windowScene) return;
 
-        UIWindowSceneGeometryPreferences *value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskAll];
+    UIWindowSceneGeometryPreferences *value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskAll];
 
         if (orientation == MobileUI::Portrait) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
         else if (orientation == MobileUI::Portrait_upsidedown) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortraitUpsideDown];
