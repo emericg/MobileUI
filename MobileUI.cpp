@@ -32,8 +32,6 @@
 #include <QTimer>
 #include <QDebug>
 
-#include <cmath>
-
 /* ************************************************************************** */
 
 MobileUI *MobileUI::instance = nullptr;
@@ -164,6 +162,21 @@ void MobileUI::refreshDeviceTheme()
 
 /* ************************************************************************** */
 
+void MobileUI::refreshSystemBars()
+{
+    // colors
+    if (m_statusbarColor.isValid()) d->setColor_statusbar(m_statusbarColor);
+    if (m_navbarColor.isValid()) d->setColor_navbar(m_navbarColor);
+
+    // themes
+    if (m_statusbarTheme > MobileUI::Auto) d->setTheme_statusbar(m_statusbarTheme);
+    else if (m_statusbarThemeSet > MobileUI::Auto) d->setTheme_statusbar(m_statusbarThemeSet);
+    if (m_navbarTheme > MobileUI::Auto) d->setTheme_navbar(m_navbarTheme);
+    else if (m_navbarThemeSet > MobileUI::Auto) d->setTheme_navbar(m_navbarThemeSet);
+}
+
+/* ************************************************************************** */
+
 QColor MobileUI::getStatusbarColor() const
 {
     return m_statusbarColor;
@@ -174,24 +187,31 @@ void MobileUI::setStatusbarColor(const QColor &color)
     //qDebug() << "MobileUI::setStatusbarColor(" << color.name() << ") luminance:" << colorLuminance(color);
     if (!color.isValid()) return;
 
-    bool changed = (m_statusbarColor != color);
+    const bool changed = (m_statusbarColor != color);
 
     // we re-apply anyway, and battle with the OS fighting us...
     m_statusbarColor = color;
     d->setColor_statusbar(color);
 
-    // Automatically derive a theme from the underlying color
-    // If transparent, that responsability is best left to the user
-    if (color.alpha() > 0)
-    {
-        const MobileUI::Theme theme = static_cast<MobileUI::Theme>(!isColorLight_android(color));
-        if (theme != m_statusbarTheme)
-        {
-            m_statusbarTheme = theme;
-            d->setTheme_statusbar(theme);
-            changed = true;
-        }
-    }
+    // In "auto" mode, the theme follows the reference color, so re-resolve it.
+    setStatusbarTheme_fromColor_refresh();
+
+    if (changed) Q_EMIT statusbarUpdated();
+}
+
+QColor MobileUI::getStatusbarContentColor() const
+{
+    return m_statusbarContentColor;
+}
+
+void MobileUI::setStatusbarContentColor(const QColor &color)
+{
+    const bool changed = (m_statusbarContentColor != color);
+
+    m_statusbarContentColor = color;
+
+    // In "auto" mode, the theme follows the reference color, so re-resolve it.
+    setStatusbarTheme_fromColor_refresh();
 
     if (changed) Q_EMIT statusbarUpdated();
 }
@@ -200,16 +220,80 @@ MobileUI::Theme MobileUI::getStatusbarTheme() const
 {
     return m_statusbarTheme;
 }
+MobileUI::Theme MobileUI::getStatusbarThemeSet() const
+{
+    if (m_statusbarTheme > MobileUI::Auto) return m_statusbarTheme;
+    if (m_statusbarThemeSet > MobileUI::Auto) return m_statusbarThemeSet;
+    return MobileUI::Auto;
+}
 
 void MobileUI::setStatusbarTheme(const MobileUI::Theme theme)
 {
-    const bool changed = (theme != m_statusbarTheme);
+    bool changed = (theme != m_statusbarTheme);
+    if (!changed) changed = (theme != m_statusbarThemeSet);
 
-    // we re-apply anyway, and battle with the OS fighting us...
-    m_statusbarTheme = theme;
-    d->setTheme_statusbar(theme);
+    if (theme > MobileUI::Auto)
+    {
+        m_statusbarTheme = m_statusbarThemeSet = theme;
+
+        // set & apply the new theme
+        d->setTheme_statusbar(m_statusbarTheme);
+    }
+    else // if (theme == MobileUI::Auto)
+    {
+        m_statusbarTheme = m_statusbarThemeSet = MobileUI::Auto;
+
+        // derive & apply a new theme from the reference color, if possible
+        setStatusbarTheme_fromColor_refresh();
+    }
 
     if (changed) Q_EMIT statusbarUpdated();
+}
+
+MobileUI::Theme MobileUI::deriveStatusbarTheme(const QColor &color) const
+{
+    if (m_statusbarTheme == MobileUI::Auto)
+    {
+        if (color.isValid() && color.alpha() > 0)
+        {
+            return static_cast<MobileUI::Theme>(!isColorLight_android(color));
+        }
+    }
+
+    return MobileUI::Auto;
+}
+
+void MobileUI::setStatusbarTheme_fromColor(const QColor &color)
+{
+    if (m_statusbarTheme != MobileUI::Auto) return;
+
+   MobileUI::Theme theme = deriveStatusbarTheme(color);
+
+    if (theme > MobileUI::Auto && theme != m_statusbarThemeSet)
+    {
+        m_statusbarThemeSet = theme;
+        d->setTheme_statusbar(m_statusbarThemeSet);
+        Q_EMIT statusbarUpdated();
+    }
+}
+
+void MobileUI::setStatusbarTheme_fromColor_refresh()
+{
+    if (m_statusbarTheme != MobileUI::Auto) return;
+
+    if (m_statusbarContentColor.isValid() && m_statusbarContentColor.alpha() > 0)
+    {
+        setStatusbarTheme_fromColor(m_statusbarContentColor);
+    }
+    else if (m_statusbarColor.isValid() && m_statusbarColor.alpha() > 0)
+    {
+        setStatusbarTheme_fromColor(m_statusbarColor);
+    }
+    else if (m_statusbarThemeSet > MobileUI::Auto)
+    {
+        m_statusbarThemeSet = MobileUI::Auto;
+        Q_EMIT statusbarUpdated();
+    }
 }
 
 /* ************************************************************************** */
@@ -224,24 +308,31 @@ void MobileUI::setNavbarColor(const QColor &color)
     //qDebug() << "MobileUI::setNavbarColor(" << color.name() << ") luminance:" << colorLuminance(color);
     if (!color.isValid()) return;
 
-    bool changed = (m_navbarColor != color);
+    const bool changed = (m_navbarColor != color);
 
     // we re-apply anyway, and battle with the OS fighting us...
     m_navbarColor = color;
     d->setColor_navbar(color);
 
-    // Automatically derive a theme from the underlying color
-    // If transparent, that responsability is best left to the user
-    if (color.alpha() > 0)
-    {
-        const MobileUI::Theme theme = static_cast<MobileUI::Theme>(!isColorLight_android(color));
-        if (theme != m_navbarTheme)
-        {
-            m_navbarTheme = theme;
-            d->setTheme_navbar(theme);
-            changed = true;
-        }
-    }
+    // In "auto" mode, the theme follows the reference color, so re-resolve it.
+    setNavbarTheme_fromColor_refresh();
+
+    if (changed) Q_EMIT navbarUpdated();
+}
+
+QColor MobileUI::getNavbarContentColor() const
+{
+    return m_navbarContentColor;
+}
+
+void MobileUI::setNavbarContentColor(const QColor &color)
+{
+    const bool changed = (m_navbarContentColor != color);
+
+    m_navbarContentColor = color;
+
+    // In "auto" mode, the theme follows the reference color, so re-resolve it.
+    setNavbarTheme_fromColor_refresh();
 
     if (changed) Q_EMIT navbarUpdated();
 }
@@ -250,30 +341,80 @@ MobileUI::Theme MobileUI::getNavbarTheme() const
 {
     return m_navbarTheme;
 }
+MobileUI::Theme MobileUI::getNavbarThemeSet() const
+{
+    if (m_navbarTheme > MobileUI::Auto) return m_navbarTheme;
+    if (m_navbarThemeSet > MobileUI::Auto) return m_navbarThemeSet;
+    return MobileUI::Auto;
+}
 
 void MobileUI::setNavbarTheme(const MobileUI::Theme theme)
 {
-    const bool changed = (theme != m_navbarTheme);
+    bool changed = (theme != m_navbarTheme);
+    if (!changed) changed = (theme != m_navbarThemeSet);
 
-    // we re-apply anyway, and battle with the OS fighting us...
-    m_navbarTheme = theme;
-    d->setTheme_navbar(theme);
+    if (theme > MobileUI::Auto)
+    {
+        m_navbarTheme = m_navbarThemeSet = theme;
+
+        // set & apply the new theme
+        d->setTheme_navbar(m_navbarTheme);
+    }
+    else // if (theme == MobileUI::Auto)
+    {
+        m_navbarTheme = m_navbarThemeSet = MobileUI::Auto;
+
+        // derive & apply a new theme from the reference color, if possible
+        setNavbarTheme_fromColor_refresh();
+    }
 
     if (changed) Q_EMIT navbarUpdated();
 }
 
-/* ************************************************************************** */
-
-void MobileUI::refreshSystemBars()
+MobileUI::Theme MobileUI::deriveNavbarTheme(const QColor &color) const
 {
-    if (m_statusbarColor.isValid())
-        d->setColor_statusbar(m_statusbarColor);
+    if (m_navbarTheme == MobileUI::Auto)
+    {
+        if (color.isValid() && color.alpha() > 0)
+        {
+            return static_cast<MobileUI::Theme>(!isColorLight_android(color));
+        }
+    }
 
-    if (m_navbarColor.isValid())
-        d->setColor_navbar(m_navbarColor);
+    return MobileUI::Auto;
+}
 
-    d->setTheme_statusbar(m_statusbarTheme);
-    d->setTheme_navbar(m_navbarTheme);
+void MobileUI::setNavbarTheme_fromColor(const QColor &color)
+{
+    if (m_navbarTheme != MobileUI::Auto) return;
+
+    const MobileUI::Theme theme = deriveNavbarTheme(color);
+
+    if (theme > MobileUI::Auto && theme != m_navbarThemeSet)
+    {
+        m_navbarThemeSet = theme;
+        d->setTheme_navbar(m_navbarThemeSet);
+        Q_EMIT navbarUpdated();
+    }
+}
+
+void MobileUI::setNavbarTheme_fromColor_refresh()
+{
+    if (m_navbarTheme != MobileUI::Auto) return;
+
+    if (m_navbarContentColor.isValid() && m_navbarContentColor.alpha() > 0)
+    {
+        setNavbarTheme_fromColor(m_navbarContentColor);
+    }
+    else if (m_navbarColor.isValid() && m_navbarColor.alpha() > 0)
+    {
+        setNavbarTheme_fromColor(m_navbarColor);
+    }
+    else if (m_navbarThemeSet > MobileUI::Auto)
+    {
+        m_navbarThemeSet = MobileUI::Auto;
+        Q_EMIT navbarUpdated();
+    }
 }
 
 /* ************************************************************************** */
@@ -344,7 +485,7 @@ void MobileUI::setScreenOrientation(const MobileUI::ScreenOrientation orientatio
     m_screenOrientation = orientation;
     d->setScreenOrientation(orientation);
 
-    // Forcing the screen orientation does not emit QScreen::orientationChanged,
+    // forcing the screen orientation does not emit QScreen::orientationChanged,
     // so we refresh the safe areas ourselves
     refreshMobileUI();
 

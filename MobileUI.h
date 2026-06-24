@@ -69,11 +69,16 @@ class MobileUI : public QObject
     Q_PROPERTY(Theme deviceTheme READ getDeviceTheme NOTIFY devicethemeUpdated)
 
     Q_PROPERTY(QColor statusbarColor READ getStatusbarColor WRITE setStatusbarColor NOTIFY statusbarUpdated)
+    Q_PROPERTY(QColor statusbarContentColor READ getStatusbarContentColor WRITE setStatusbarContentColor NOTIFY statusbarUpdated)
     Q_PROPERTY(Theme statusbarTheme READ getStatusbarTheme WRITE setStatusbarTheme NOTIFY statusbarUpdated)
-    Q_PROPERTY(int statusbarHeight READ getStatusbarHeight NOTIFY safeAreaUpdated)
+    Q_PROPERTY(Theme statusbarThemeSet READ getStatusbarThemeSet NOTIFY statusbarUpdated)
 
     Q_PROPERTY(QColor navbarColor READ getNavbarColor WRITE setNavbarColor NOTIFY navbarUpdated)
+    Q_PROPERTY(QColor navbarContentColor READ getNavbarContentColor WRITE setNavbarContentColor NOTIFY navbarUpdated)
     Q_PROPERTY(Theme navbarTheme READ getNavbarTheme WRITE setNavbarTheme NOTIFY navbarUpdated)
+    Q_PROPERTY(Theme navbarThemeSet READ getNavbarThemeSet NOTIFY navbarUpdated)
+
+    Q_PROPERTY(int statusbarHeight READ getStatusbarHeight NOTIFY safeAreaUpdated)
     Q_PROPERTY(int navbarHeight READ getNavbarHeight NOTIFY safeAreaUpdated)
 
     Q_PROPERTY(int safeAreaTop READ getSafeAreaTop NOTIFY safeAreaUpdated)
@@ -85,10 +90,36 @@ class MobileUI : public QObject
     Q_PROPERTY(ScreenOrientation screenOrientation READ getScreenOrientation WRITE setScreenOrientation NOTIFY screenUpdated)
     Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenUpdated)
 
+Q_SIGNALS:
+    void devicethemeUpdated();  //!< Emitted when the device OS theme (light/dark mode) changes.
+    void statusbarUpdated();    //!< Emitted when a status bar color or theme is set.
+    void navbarUpdated();       //!< Emitted when a navigation bar color or theme is set.
+    void safeAreaUpdated();     //!< Emitted when the system bar heights or the screen safe areas are changed (by or rotation or some other reason).
+    void screenUpdated();       //!< Emitted when a screen related property (always-on, orientation, brightness) is set.
+
 public:
+    /*!
+     * \brief Get the process-wide MobileUI singleton instance.
+     *
+     * Use this to access the instance (and its cached safe area properties / signals) from C++.
+     * The same instance is shared with QML.
+     */
+    static MobileUI *getInstance();
+
+    /*!
+     * \brief QML singleton factory.
+     *
+     * Called by the QML engine to obtain the MobileUI singleton.
+     * It simply returns getInstance(), so C++ and QML share a single instance.
+     */
+    static MobileUI *create(QQmlEngine *engine, QJSEngine *scriptEngine);
+
+    // Enums ///////////////////////////////////////////////////////////////////
+
     enum Theme {
-        Light,  //!< Light application theme, usually light background and dark texts.
-        Dark    //!< Dark application theme, usually dark background and light texts.
+        Auto  = -1, //!< Derive the bar theme from its reference color, or leave it to the OS if none is set.
+        Light =  0, //!< Light application theme, usually light background and dark texts.
+        Dark  =  1  //!< Dark application theme, usually dark background and light texts.
     };
     Q_ENUM(Theme)
 
@@ -111,35 +142,6 @@ public:
         Landscape_sensor    = (1 << 5),     //!< Both landscape orientations, sensor driven (Android only; falls back to Landscape on iOS).
     };
     Q_ENUM(ScreenOrientation)
-
-Q_SIGNALS:
-    //! Emitted when the device OS theme (light/dark mode) changes.
-    void devicethemeUpdated();
-    //! Emitted when a status bar color or theme is set.
-    void statusbarUpdated();
-    //! Emitted when a navigation bar color or theme is set.
-    void navbarUpdated();
-    //! Emitted when the system bar heights or the screen safe areas are changed (by or rotation or some other reason).
-    void safeAreaUpdated();
-    //! Emitted when a screen related property (always-on, orientation, brightness) is set.
-    void screenUpdated();
-
-public:
-    /*!
-     * \brief Get the process-wide MobileUI singleton instance.
-     *
-     * Use this to access the instance (and its cached safe area properties / signals) from C++.
-     * The same instance is shared with QML.
-     */
-    static MobileUI *getInstance();
-
-    /*!
-     * \brief QML singleton factory.
-     *
-     * Called by the QML engine to obtain the MobileUI singleton.
-     * It simply returns getInstance(), so C++ and QML share a single instance.
-     */
-    static MobileUI *create(QQmlEngine *engine, QJSEngine *scriptEngine);
 
     // MobileUI ////////////////////////////////////////////////////////////////
 
@@ -195,35 +197,57 @@ public:
     /*!
      * \brief Get the last status bar color that was set.
      * \return the current status bar color.
-     * \note Android only.
+     * \note Android only (iOS has no notion of a status bar color).
      * \note This is the value previously passed to setStatusbarColor(), not a value read back from the OS.
      */
     QColor getStatusbarColor() const;
 
     /*!
      * \brief Set the status bar background color.
-     * \param color: the desired status bar color; may be "transparent". Invalid colors are ignored.
+     * \param color: the desired status bar color ("transparent" is ok, invalid colors are ignored).
      * \note Android only (iOS has no notion of a status bar color).
      *
-     * When the color is opaque, a matching Light/Dark theme is derived
-     * automatically from its perceived luminance.
-     * For a transparent color the theme is left to the caller.
+     * When the color is opaque and the status bar theme is set to Auto, a matching
+     * Light/Dark theme is derived automatically from the color perceived luminance.
      */
     void setStatusbarColor(const QColor &color);
 
+    //! Get the color used to derive the statusbarTheme (when theme is Auto).
+    QColor getStatusbarContentColor() const;
+
     /*!
-     * \brief Get the current status bar theme.
-     * \return see MobileUI::Theme enum.
-     * \note Android only.
+     * \brief Set a reference color used to derive the status bar theme, when in Auto mode.
+     * \param color: the color the status bar icons should contrast against.
+     *
+     * Useful in edge-to-edge mode:
+     * the OS bar is fully transparent (or not drawn at all) and your application
+     * can paints freely its own content behind that bar, but the text/icon contrast
+     * should still follow that painted color.
+     *
+     * When the color is opaque and the status bar theme is set to Auto, a matching
+     * Light/Dark theme is derived automatically from the color perceived luminance.
+     *
+     * When an invalid color is set, the hidden color is cleared, and Auto derivation
+     * falls back to navbarColor, and if that's not set the theme is cleared too,
+     * and the theme control will be back to the OS.
      */
+    void setStatusbarContentColor(const QColor &color);
+
+    //! Get the current status bar theme we set manually.
     MobileUI::Theme getStatusbarTheme() const;
+
+    //! Get the current status bar theme we set, manually or automatically, otherwise Auto.
+    MobileUI::Theme getStatusbarThemeSet() const;
 
     /*!
      * \brief Set the status bar foreground theme (icons/text contrast).
-     * \param theme: see MobileUI::Theme enum.
+     * \param theme: see MobileUI::Theme enum (Light, Dark, or Auto).
      *
-     * On iOS and Android the OS may reset this on visibility/orientation
-     * changes, so MobileUI re-applies it automatically.
+     * If Auto, the theme is derived from the reference color if available,
+     * or next time a color is set.
+     *
+     * The OS may reset the theme on visibility/orientation changes, so MobileUI
+     * will re-applies it automatically.
      */
     void setStatusbarTheme(const MobileUI::Theme theme);
 
@@ -240,36 +264,60 @@ public:
 
     /*!
      * \brief Set the navigation bar background color.
-     * \param color: the desired navigation bar color; may be "transparent". Invalid colors are ignored.
+     * \param color: the desired navigation bar color ("transparent" is ok, invalid colors are ignored).
      * \note Android only (iOS has no navigation bar).
      *
-     * When the color is opaque, a matching Light/Dark theme is derived
-     * automatically from its perceived luminance.
-     * For a transparent color the theme is left to the caller.
+     * When the color is opaque and the navigation bar theme is set to Auto, a matching
+     * Light/Dark theme is derived automatically from the color perceived luminance.
      */
     void setNavbarColor(const QColor &color);
 
+    //! Get the color used to derive the navbarTheme (when theme is Auto).
+    QColor getNavbarContentColor() const;
+
     /*!
-     * \brief Get the current navigation bar theme.
-     * \return see MobileUI::Theme enum.
-     * \note Android only.
+     * \brief Set a reference color used to derive the navigation bar theme, when in Auto mode.
+     * \param color: the color the navigation bar icons should contrast against.
+     * \note Android only (iOS has no navigation bar).
+     *
+     * Useful in edge-to-edge mode:
+     * the OS bar is fully transparent (or not drawn at all) and your application
+     * can paints freely its own content behind that bar, but the text/icon contrast
+     * should still follow that painted color.
+     *
+     * When the color is opaque and the navigation bar theme is set to Auto, a matching
+     * Light/Dark theme is derived automatically from the color perceived luminance.
+     *
+     * When an invalid color is set, the hidden color is cleared, and Auto derivation
+     * falls back to navbarColor, and if that's not set the theme is cleared too,
+     * and the theme control will be back to the OS.
      */
+    void setNavbarContentColor(const QColor &color);
+
+    //! Get the current navigation bar theme we set manually.
     MobileUI::Theme getNavbarTheme() const;
+
+    //! Get the current navigation bar theme we set, manually or automatically, otherwise Auto.
+    MobileUI::Theme getNavbarThemeSet() const;
 
     /*!
      * \brief Set the navigation bar foreground theme (icons contrast).
-     * \param theme: see MobileUI::Theme enum.
-     * \note Android only.
+     * \param theme: see MobileUI::Theme enum (Light, Dark, or Auto).
+     * \note Android only (iOS has no navigation bar).
      *
-     * The OS may reset this on visibility/orientation changes, so MobileUI re-applies it automatically.
+     * If Auto, the theme is derived from the reference color if available,
+     * or next time a color is set.
+     *
+     * The OS may reset the theme on visibility/orientation changes, so MobileUI
+     * will re-applies it automatically.
      */
     void setNavbarTheme(const MobileUI::Theme theme);
 
     /*!
      * \brief Re-apply the status bar and navigation bar colors and themes.
      *
-     * The native system bar styles can be resetted by the OS (for instance when
-     * the application returns to the foreground, or on rotation), so this
+     * The native system bar colors and themes may be resetted by the OS (for instance
+     * when the application returns to the foreground, or on rotation, ...), so this
      * pushes the cached colors/themes back to the platform.
      *
      * It is called automatically by refreshMobileUI() whenever the screen orientation,
@@ -443,10 +491,14 @@ private:
 
     // System bars states
     QColor m_statusbarColor;
-    MobileUI::Theme m_statusbarTheme = MobileUI::Light;
+    QColor m_statusbarContentColor; //!< Used to derive a theme only, not applied to the status bar
+    MobileUI::Theme m_statusbarTheme = MobileUI::Auto;
+    MobileUI::Theme m_statusbarThemeSet = MobileUI::Auto;
 
     QColor m_navbarColor;
-    MobileUI::Theme m_navbarTheme = MobileUI::Light;
+    QColor m_navbarContentColor; //!< Used to derive a theme only, not applied to the navigation bar
+    MobileUI::Theme m_navbarTheme = MobileUI::Auto;
+    MobileUI::Theme m_navbarThemeSet = MobileUI::Auto;
 
     int m_statusbarHeight = 0;
     int m_navbarHeight = 0;
@@ -464,6 +516,20 @@ private:
 
     //! Connect to screen orientation, window visibility and theme changes.
     void connectSignals();
+
+    //! Get a theme from a given color (when in "auto" mode only).
+    MobileUI::Theme deriveStatusbarTheme(const QColor &color) const;
+    MobileUI::Theme deriveNavbarTheme(const QColor &color) const;
+
+    //! Get & apply a theme from a given color (when in "auto" mode only).
+    void setStatusbarTheme_fromColor(const QColor &color);
+    void setNavbarTheme_fromColor(const QColor &color);
+
+    //! When in "auto" mode, (re)derive the theme from the reference color.
+    //! Hidden color first if set, then the system bar color, or if neither is usable
+    //! we hand control back to the OS. The icons keep their current look until the OS changes them.
+    void setStatusbarTheme_fromColor_refresh();
+    void setNavbarTheme_fromColor_refresh();
 
     /*!
      * \brief Restartable retry timers re-setting the system bars / re-reading safe areas as they settle.

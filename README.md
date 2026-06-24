@@ -186,11 +186,21 @@ Set the status bar color (if available).
 
 This is a QColor, so you can use a hexadecimal value `"#fff"` or even a named color `"red"`. And you can use `"transparent"` too.
 
-Setting a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.
+By default the theme is `Auto`, so setting a color also updates the derived theme (evaluated from whether the bar color is perceived as light or dark). Set an explicit theme to override that behavior.
+
+> statusbarContentColor
+
+The reference color used to derive the theme while `statusbarTheme` is `Auto` and the statusbarColor is `"transparent"` (or not drawn).
+
+This is meant to be used in edge-to-edge mode: you can choose to use a fully transparent status bar, and paint your own content freely behind that bar, but you want the text/icon contrast to still follow that content color.
+
+When unset, derivation falls back to `statusbarColor`, and if that isn't set either, the OS will take back control of the theme.
 
 > statusbarTheme
 
-Set the status bar theme explicitly, `MobileUI.Light` or `MobileUI.Dark`.
+Set the status bar theme: `MobileUI.Auto` (the default), `MobileUI.Light` or `MobileUI.Dark`.
+
+`Auto` derives the theme from the bar's reference color — `statusbarContentColor` if used, otherwise the default `statusbarColor` — and leaves the theme to the OS when no usable color is available. `Light` / `Dark` force it explicitly.
 
 On iOS and Android API 28+, the theme must be set each time the window visibility or orientation changes. This is handled automatically by MobileUI.
 
@@ -199,19 +209,37 @@ On iOS and Android API 28+, the theme must be set each time the window visibilit
 > These ROMs use a form of auto-contrast the status bar icons from the perceived brightness of the bar's background color.  
 > You can use the isColorLight_hyperos() helper to check if the color you choose is below of above the ~0.5 luminance point cutoff used.  
 
+> statusbarThemeSet
+
+Read-only: the theme actually applied right now (`MobileUI.Light`, `MobileUI.Dark`, or `MobileUI.Auto` when nothing is applied).
+
 > navbarColor
 
 Set the navigation bar color (if available).
 
 This is a QColor, so you can use a hexadecimal value `"#fff"` or even a named color `"red"`. And you can use `"transparent"` too.
 
-Setting a color will also set a theme, by automatically evaluating if the bar color is more light or dark. You can force a theme if you are not satisfied by the result.
+By default the theme is `Auto`, so setting a color also updates the derived theme. Set an explicit theme to override that behavior.
+
+> navbarContentColor
+
+The reference color used to derive the theme while `navbarTheme` is `Auto`.
+
+This is meant to be used in edge-to-edge mode: you can choose to use a fully transparent navigation bar, and paint your own content freely behind that bar, but you want the text/icon contrast to still follow that content color.
+
+When unset, derivation falls back to `statusbarColor`, and if that isn't set either, the OS will take back control of the theme.
 
 > navbarTheme
 
-Set the navigation bar theme explicitly, `MobileUI.Light` or `MobileUI.Dark`.
+Set the navigation bar theme: `MobileUI.Auto` (the default), `MobileUI.Light` or `MobileUI.Dark`.
+
+`Auto` derives the theme from the bar's reference color — `navbarContentColor` if used, otherwise the default `navbarColor` — and leaves the theme to the OS when no usable color is available. `Light` / `Dark` force it explicitly.
 
 On Android API 28+, the theme must be set each time the window visibility or orientation changes. This is handled automatically by MobileUI.
+
+> navbarThemeSet
+
+Read-only: the theme actually applied right now (`MobileUI.Light`, `MobileUI.Dark`, or `MobileUI.Auto` when nothing is applied).
 
 ### Device theme
 
