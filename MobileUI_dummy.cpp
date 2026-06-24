@@ -50,34 +50,10 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
     Q_UNUSED(theme)
 }
 
-int MobileUIPrivate::getStatusbarHeight()
+void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight,
+                                         int &top, int &left, int &right, int &bottom)
 {
-    return 0;
-}
-
-int MobileUIPrivate::getNavbarHeight()
-{
-    return 0;
-}
-
-int MobileUIPrivate::getSafeAreaTop()
-{
-    return 0;
-}
-
-int MobileUIPrivate::getSafeAreaLeft()
-{
-    return 0;
-}
-
-int MobileUIPrivate::getSafeAreaRight()
-{
-    return 0;
-}
-
-int MobileUIPrivate::getSafeAreaBottom()
-{
-    return 0;
+    statusbarHeight = navbarHeight = top = left = right = bottom = 0;
 }
 
 void MobileUIPrivate::setScreenAlwaysOn(const bool on)

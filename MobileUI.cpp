@@ -280,24 +280,14 @@ void MobileUI::refreshSystemBars()
 
 void MobileUI::refreshSafeAreas()
 {
-    int statusbar = d->getStatusbarHeight();
-    int navbar = d->getNavbarHeight();
-    int top = 0;
-    int left = 0;
-    int right = 0;
-    int bottom = 0;
+    int statusbar = 0, navbar = 0, top = 0, left = 0, right = 0, bottom = 0;
+    d->getSafeAreaMetrics(statusbar, navbar, top, left, right, bottom);
 
     const QWindowList windows = qApp->allWindows();
     QWindow *window = windows.isEmpty() ? nullptr : windows.first();
     const bool fullscreenMode = (window && window->visibility() == QWindow::FullScreen);
 
-    // Safe areas
-    top = d->getSafeAreaTop();
-    left = d->getSafeAreaLeft();
-    right = d->getSafeAreaRight();
-    bottom = d->getSafeAreaBottom();
-
-    // When the window is in full screen mode, the system bars are no shown
+    // When the window is in "full screen" mode, the system bars are not shown
     if (fullscreenMode)
     {
         statusbar = 0;

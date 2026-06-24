@@ -125,48 +125,29 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 
 /* ************************************************************************** */
 
-int MobileUIPrivate::getStatusbarHeight()
+void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight,
+                                         int &top, int &left, int &right, int &bottom)
 {
+    statusbarHeight = navbarHeight = 0;
+
     UIWindowScene *windowScene = activeWindowScene();
-    CGSize statusBarSize = windowScene.statusBarManager.statusBarFrame.size;
-    return static_cast<int>(std::lround(MIN(statusBarSize.width, statusBarSize.height)));
-}
+    if (windowScene)
+    {
+        CGSize statusBarSize = windowScene.statusBarManager.statusBarFrame.size;
+        statusbarHeight = static_cast<int>(std::lround(MIN(statusBarSize.width, statusBarSize.height)));
+    }
 
-int MobileUIPrivate::getNavbarHeight()
-{
-    return 0;
-}
+    top = left = right = bottom = 0;
 
-int MobileUIPrivate::getSafeAreaTop()
-{
-    UIWindow *keyWindow = activeKeyWindow();
-    if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.top));
-
-    return 0;
-}
-
-int MobileUIPrivate::getSafeAreaLeft()
-{
-    UIWindow *keyWindow = activeKeyWindow();
-    if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.left));
-
-    return 0;
-}
-
-int MobileUIPrivate::getSafeAreaRight()
-{
-    UIWindow *keyWindow = activeKeyWindow();
-    if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.right));
-
-    return 0;
-}
-
-int MobileUIPrivate::getSafeAreaBottom()
-{
-    UIWindow *keyWindow = activeKeyWindow();
-    if (keyWindow) return static_cast<int>(std::lround(keyWindow.safeAreaInsets.bottom));
-
-    return 0;
+    UIWindow *keyWindow = windowScene.keyWindow;
+    if (keyWindow)
+    {
+        UIEdgeInsets insets = keyWindow.safeAreaInsets;
+        top = static_cast<int>(std::lround(insets.top));
+        left = static_cast<int>(std::lround(insets.left));
+        right = static_cast<int>(std::lround(insets.right));
+        bottom = static_cast<int>(std::lround(insets.bottom));
+    }
 }
 
 /* ************************************************************************** */
@@ -200,12 +181,12 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
         UIWindowSceneGeometryPreferences *value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskAll];
 
         if (orientation == MobileUI::Portrait) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
-    else if (orientation == MobileUI::Portrait_upsidedown) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortraitUpsideDown];
-    else if (orientation == MobileUI::Landscape_left) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeLeft];
-    else if (orientation == MobileUI::Landscape_right) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeRight];
-    else if (orientation == MobileUI::Landscape_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscape];
-    // these aren't supported, so we default to regular mode
-    else if (orientation == MobileUI::Portrait_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
+        else if (orientation == MobileUI::Portrait_upsidedown) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortraitUpsideDown];
+        else if (orientation == MobileUI::Landscape_left) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeLeft];
+        else if (orientation == MobileUI::Landscape_right) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeRight];
+        else if (orientation == MobileUI::Landscape_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscape];
+        // these aren't supported, so we default to regular mode
+        else if (orientation == MobileUI::Portrait_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
 
         [windowScene requestGeometryUpdateWithPreferences:value errorHandler:^(NSError * _Nonnull error) {
             qDebug() << "Cannot requestGeometryUpdate: unsupported?";
