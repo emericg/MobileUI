@@ -270,13 +270,13 @@ MobileUI listen to the change affecting these values.
 
 > statusbarHeight
 
-Status bar size, in pixels.
+Status bar size, in pixels, DPI adjusted.
 
 Status bar is always at the top of the screen, when visible. Otherwise this value will be set to 0.
 
 > navbarHeight
 
-Navigation bar size, in pixels.
+Navigation bar size, in pixels, DPI adjusted.
 
 Navigation bar is usually at the bottom of the screen, when visible. Otherwise this value will be set to 0.
 
@@ -322,7 +322,7 @@ Available orientations:
 
 > Portrait
 
-> Portrait_upsidedown // only available on Android?
+> Portrait_upsidedown
 
 > Portrait_sensor // on iOS, falls back to a fixed Portrait
 
@@ -416,6 +416,10 @@ get a light grey depending on your device. It's bad if you're coming from a whit
 
 ## Licensing
 
+This project is based on [qtstatusbar](https://github.com/jpnurmi/qtstatusbar) by jpnurmi.
+
 This project is licensed under the [MIT license](LICENSE).
 
-This project is based on [qtstatusbar](https://github.com/jpnurmi/qtstatusbar) by jpnurmi.
+> Copyright (c) 2016 J-P Nurmi (jpnurmi)  
+
+> Copyright (c) 2026 Emeric Grange (emeric.grange@gmail.com)  
