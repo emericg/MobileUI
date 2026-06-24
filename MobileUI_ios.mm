@@ -195,11 +195,11 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
     // UIInterfaceOrientationMaskLandscapeRight,    // The view controller supports a landscape-right interface orientation.
 
     UIWindowScene *windowScene = activeWindowScene();
-    if (!windowScene) return;
+    if (windowScene)
+    {
+        UIWindowSceneGeometryPreferences *value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskAll];
 
-    UIWindowSceneGeometryPreferences *value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskAll];
-
-    if (orientation == MobileUI::Portrait) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
+        if (orientation == MobileUI::Portrait) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
     else if (orientation == MobileUI::Portrait_upsidedown) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortraitUpsideDown];
     else if (orientation == MobileUI::Landscape_left) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeLeft];
     else if (orientation == MobileUI::Landscape_right) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscapeRight];
@@ -207,9 +207,10 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
     // these aren't supported, so we default to regular mode
     else if (orientation == MobileUI::Portrait_sensor) value = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskPortrait];
 
-    [windowScene requestGeometryUpdateWithPreferences:value errorHandler:^(NSError * _Nonnull error) {
-        qDebug() << "Cannot requestGeometryUpdate: unsupported?";
-    }];
+        [windowScene requestGeometryUpdateWithPreferences:value errorHandler:^(NSError * _Nonnull error) {
+            qDebug() << "Cannot requestGeometryUpdate: unsupported?";
+        }];
+    }
 }
 
 /* ************************************************************************** */

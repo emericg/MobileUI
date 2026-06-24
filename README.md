@@ -63,19 +63,19 @@ MobileUI is a proper CMake QML module (and a QML singleton), so it is registered
 import QtQuick
 import MobileUI
 
-// Do not use ApplicationWindow, or you'll get Qt inferior safe area implementation!
+// Use a regular Window and not an ApplicationWindow, or you'll get Qt's inferior safe area implementation!
 Window {
 
     // EITHER set the variables declaratively
     Component.onCompleted: {
-        MobileUI.statusbarColor = "red"
+        MobileUI.statusbarColor = "grey"
         MobileUI.statusbarTheme = MobileUI.Dark
     
         MobileUI.navbarColor = "blue"
-        MobileUI.navbarTheme = MobileUI.Dark
+        MobileUI.navbarTheme = MobileUI.Light
     }
     
-    // OR use bindings
+    // OR use bindings (for more dynamic use cases)
     Binding {
             target: MobileUI
             property: "statusbarTheme"

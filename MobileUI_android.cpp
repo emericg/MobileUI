@@ -103,7 +103,7 @@ static QJniObject getInsetsController()
 {
     if (QNativeInterface::QAndroidApplication::sdkVersion() >= 30)
     {
-        // getInsetsController // has been added in API level 30
+        // getInsetsController // Added in API level 30
 
         return getAndroidWindow().callObjectMethod("getInsetsController", "()Landroid/view/WindowInsetsController;");
     }
@@ -111,20 +111,21 @@ static QJniObject getInsetsController()
     return QJniObject();
 }
 
+static QJniObject getAndroidRootWindowInsets()
+{
+    // getRootWindowInsets // Added in API level 28
+
+    return getAndroidDecorView().callObjectMethod("getRootWindowInsets", "()Landroid/view/WindowInsets;");
+}
+
 static QJniObject getDisplayCutout()
 {
-    if (QNativeInterface::QAndroidApplication::sdkVersion() >= 28)
+    QJniObject insets = getAndroidRootWindowInsets();
+    if (insets.isValid())
     {
-        // getRootWindowInsets // has been added in API level 28
-        // getDisplayCutout // has been added in API level 28
+        // getDisplayCutout // Added in API level 28
 
-        QJniObject insets = getAndroidDecorView().callObjectMethod("getRootWindowInsets",
-                                                                   "()Landroid/view/WindowInsets;");
-
-        if (insets.isValid())
-        {
-            return insets.callObjectMethod("getDisplayCutout", "()Landroid/view/DisplayCutout;");
-        }
+        return insets.callObjectMethod("getDisplayCutout", "()Landroid/view/DisplayCutout;");
     }
 
     return QJniObject();
@@ -134,14 +135,11 @@ static QJniObject getWindowInsetsType(const char *insetType)
 {
     if (QNativeInterface::QAndroidApplication::sdkVersion() >= 30)
     {
-        // getRootWindowInsets // has been added in API level 28
-        // WindowInsets.Type // has been added in API level 30
-
-        QJniObject insets = getAndroidDecorView().callObjectMethod("getRootWindowInsets",
-                                                                   "()Landroid/view/WindowInsets;");
-
+        QJniObject insets = getAndroidRootWindowInsets();
         if (insets.isValid())
         {
+            // WindowInsets.Type // Added in API level 30
+
             // can be "statusBars", "navigationBars", "systemBars"
             jint type = QJniObject::callStaticMethod<jint>("android/view/WindowInsets$Type",
                                                            insetType, "()I");

@@ -77,7 +77,7 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent), d(std::make_unique<Mobile
                                           std::pow(screen->physicalSize().height(), 2.0)) / (2.54 * 10.0);
 
         if (screenSizeInch >= 7.0) m_isTablet = true;
-        else  m_isPhone = true;
+        else m_isPhone = true;
     }
 
     // The application window doesn't exist yet when this object is created from QML,
@@ -303,6 +303,25 @@ void MobileUI::refreshSafeAreas()
         statusbar = 0;
         navbar = 0;
     }
+
+    // iOS without "maximized geometry" has no available safe areas
+#if defined (Q_OS_IOS)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+    const bool maximizedHint = (window && (window->flags() & Qt::ExpandedClientAreaHint));
+#else
+    const bool maximizedHint = (window && (window->flags() & Qt::MaximizeUsingFullscreenGeometryHint));
+#endif
+
+    if (!maximizedHint)
+    {
+        statusbar = 0;
+        navbar = 0;
+        top = 0;
+        left = 0;
+        right = 0;
+        bottom = 0;
+    }
+#endif
 
     // Notify the UI safeAreas have changed, if needed
     if (statusbar != m_statusbarHeight || navbar != m_navbarHeight ||
