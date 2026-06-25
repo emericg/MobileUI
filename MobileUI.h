@@ -101,7 +101,7 @@ public:
     /*!
      * \brief Get the process-wide MobileUI singleton instance.
      *
-     * Use this to access the instance (and its cached safe area properties / signals) from C++.
+     * Use this to access the instance rom C++.
      * The same instance is shared with QML.
      */
     static MobileUI *getInstance();
@@ -110,7 +110,8 @@ public:
      * \brief QML singleton factory.
      *
      * Called by the QML engine to obtain the MobileUI singleton.
-     * It simply returns getInstance(), so C++ and QML share a single instance.
+     * Returns getInstance(), so C++ and QML share the same single instance,
+     * and flags it C++ owned so the JS engine never deletes it.
      */
     static MobileUI *create(QQmlEngine *engine, QJSEngine *scriptEngine);
 
@@ -547,7 +548,6 @@ private:
     std::unique_ptr<MobileUIPrivate> d;
 
     // Singleton
-    static MobileUI *instance;
     explicit MobileUI(QObject *parent = nullptr);
     ~MobileUI() override;
 };

@@ -34,28 +34,26 @@
 
 /* ************************************************************************** */
 
-MobileUI *MobileUI::instance = nullptr;
-
 MobileUI *MobileUI::getInstance()
 {
-    if (instance == nullptr)
-    {
-        instance = new MobileUI();
-        QJSEngine::setObjectOwnership(instance, QJSEngine::CppOwnership);
-    }
-
+    static MobileUI *instance = new MobileUI(QCoreApplication::instance());
     return instance;
 }
 
 MobileUI *MobileUI::create(QQmlEngine *, QJSEngine *)
 {
-    return MobileUI::getInstance();
+    MobileUI *instance = getInstance();
+    QJSEngine::setObjectOwnership(instance, QJSEngine::CppOwnership);
+    return instance;
 }
 
 /* ************************************************************************** */
 
-MobileUI::MobileUI(QObject *parent) : QObject(parent), d(std::make_unique<MobileUIPrivate>())
+MobileUI::MobileUI(QObject *parent) : QObject(parent)
 {
+    d = std::make_unique<MobileUIPrivate>();
+
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     // Set up the retry timers used by refreshMobileUI()
     for (unsigned i = 0; i < 4; ++i)
     {
@@ -67,7 +65,6 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent), d(std::make_unique<Mobile
         });
     }
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     QScreen *screen = qApp->primaryScreen();
     if (screen)
     {
