@@ -52,6 +52,9 @@ class MobileUIPrivate;
  * - Force screen brightness.
  * - Screensaver inhibition.
  * - Haptic feedbacks.
+ * - Torch mode (rear camera flash LED).
+ * - Android "safe screen" helper.
+ * - Android "high refresh rate" helper.
  * - Android "back to home screen" helper.
  *
  * It is exposed to QML as a singleton, and the same instance is shared with C++
@@ -93,6 +96,12 @@ class MobileUI : public QObject
     Q_PROPERTY(ScreenLockOrientation screenLockedOrientation READ getScreenLockOrientation WRITE setScreenLockOrientation NOTIFY screenUpdated)
     Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenUpdated)
     Q_PROPERTY(bool screenAlwaysOn READ getScreenAlwaysOn WRITE setScreenAlwaysOn NOTIFY screenUpdated)
+    Q_PROPERTY(bool screenSecure READ getScreenSecure WRITE setScreenSecure NOTIFY screenUpdated)
+    Q_PROPERTY(bool screenHighRefreshRate READ getHighRefreshRate WRITE setHighRefreshRate NOTIFY screenUpdated)
+
+    Q_PROPERTY(bool torchEnabled READ getTorchEnabled WRITE setTorchEnabled NOTIFY torchUpdated)
+
+    Q_PROPERTY(int iconBadgeNumber READ getIconBadgeNumber WRITE setIconBadgeNumber NOTIFY iconBadgeUpdated)
 
 Q_SIGNALS:
     void devicethemeUpdated();  //!< Emitted when the device OS theme (light/dark mode) changes.
@@ -100,7 +109,9 @@ Q_SIGNALS:
     void navbarUpdated();       //!< Emitted when a navigation bar color or theme is set.
     void keyboardUpdated();     //!< Emitted when the on-screen keyboard height changes (shown, hidden or resized).
     void safeAreaUpdated();     //!< Emitted when the system bar heights or the screen safe areas are changed (by or rotation or some other reason).
-    void screenUpdated();       //!< Emitted when a screen related property (always-on, orientation, brightness) is set.
+    void screenUpdated();       //!< Emitted when a screen related property (always-on, orientation, brightness, refresh rate) is set.
+    void torchUpdated();        //!< Emitted when the torch (camera flash LED) state changes.
+    void iconBadgeUpdated();    //!< Emitted when the application icon badge number changes.
 
 public:
     /*!
@@ -439,6 +450,45 @@ public:
      */
     Q_INVOKABLE void setScreenAlwaysOn(const bool value);
 
+    /*!
+     * \brief Tell whether the secure screen flag is set.
+     * \return true if the window is marked secure.
+     */
+    bool getScreenSecure() const { return m_screenSecure; }
+
+    /*!
+     * \brief Mark the window as secure, to exclude its content from screen captures.
+     * \param value: true to enable the secure flag, false to disable it.
+     * \note Android only.
+     *
+     * On Android this sets the window FLAG_SECURE: the content is blocked from
+     * screenshots and screen recordings, hidden from the recent-apps thumbnail, and
+     * not shown on non-secure external displays.
+     *
+     * On iOS this is a no-op: there is no equivalent window flag (an app can only blur
+     * its content when entering the background to hide it from the app switcher).
+     */
+    Q_INVOKABLE void setScreenSecure(const bool value);
+
+    /*!
+     * \brief Tell whether a high screen refresh rate has been requested.
+     * \return true if the high refresh rate request is active.
+     */
+    bool getHighRefreshRate() const { return m_screenHighRefreshRate; }
+
+    /*!
+     * \brief Request (or release) the highest screen refresh rate available.
+     * \param value: true to request the highest refresh rate, false to hand control back to the system.
+     * \note Android only.
+     *
+     * On Android this asks the window for the display mode with the highest refresh
+     * rate at the current resolution (90/120 Hz on devices that support it).
+     *
+     * On iOS you cant opt into ProMotion (120 Hz) at run time, you need an Info.plist key instead:
+     * "CADisableMinimumFrameDurationOnPhone" key (set to true)
+     */
+    Q_INVOKABLE void setHighRefreshRate(const bool value);
+
     // Haptic feedbacks ////////////////////////////////////////////////////////
 
     /*!
@@ -468,6 +518,23 @@ public:
     Q_INVOKABLE void hapticFeedback(const MobileUI::HapticFeedback type = MobileUI::HapticLight);
     Q_INVOKABLE void vibrate(const MobileUI::HapticFeedback type = MobileUI::HapticLight);
 
+    // Flash LED ///////////////////////////////////////////////////////////////
+
+    /*!
+     * \brief Tell whether the torch (rear camera flash LED) is currently on.
+     * \return true if the torch is on.
+     *
+     * This reflects the last state MobileUI successfully applied,
+     * false on devices with no flash.
+     */
+    bool getTorchEnabled() const { return m_torchEnabled; }
+
+    /*!
+     * \brief Turn the torch (rear camera flash LED) on or off.
+     * \param on: true to switch the torch on, false to switch it off.
+     */
+    Q_INVOKABLE void setTorchEnabled(const bool on);
+
     // Keyboard ////////////////////////////////////////////////////////////////
 
     /*!
@@ -488,6 +555,27 @@ public:
      * going back to the home screen...
      */
     Q_INVOKABLE void backToHomeScreen();
+
+    // App icon badge //////////////////////////////////////////////////////////
+
+    /*!
+     * \brief Get the number currently shown on the application icon badge.
+     * \return the badge number (0 means no badge).
+     */
+    int getIconBadgeNumber() const { return m_iconBadgeNumber; }
+
+    /*!
+     * \brief Set the number shown on the application icon badge.
+     * \param number: the badge number (0 or a negative value clears the badge).
+     * \note iOS only.
+     *
+     * On iOS, showing a badge requires the user to have granted the badge
+     * notification authorization.
+     *
+     * Android has no standard launcher badge API (badges are tied to notifications
+     * and are launcher specific), so this will do nothing.
+     */
+    Q_INVOKABLE void setIconBadgeNumber(const int number);
 
     // Color helpers ///////////////////////////////////////////////////////////
 
@@ -551,9 +639,17 @@ private:
     MobileUI::ScreenLockOrientation m_screenOrientation = MobileUI::Unlocked;
     int m_screenBrightness = -1;
     bool m_screenAlwaysOn = false;
+    bool m_screenSecure = false;
+    bool m_screenHighRefreshRate = false;
 
-    // On-screen keyboard height (in pixels)
+    // Torch state
+    bool m_torchEnabled = false;
+
+    // On-screen keyboard height
     int m_keyboardHeight = 0;
+
+    // Application icon badge number
+    int m_iconBadgeNumber = 0;
 
     //! Connect to screen orientation, window visibility and theme changes.
     void connectSignals();

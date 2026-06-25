@@ -81,9 +81,30 @@ void MobileUIPrivate::setScreenAlwaysOn(const bool on)
     Q_UNUSED(on)
 }
 
+void MobileUIPrivate::setScreenSecure(const bool on)
+{
+    Q_UNUSED(on)
+}
+
+void MobileUIPrivate::setHighRefreshRate(const bool value)
+{
+    Q_UNUSED(value)
+}
+
 void MobileUIPrivate::triggerHapticFeedback(const MobileUI::HapticFeedback type)
 {
     Q_UNUSED(type)
+}
+
+bool MobileUIPrivate::setTorch(const bool on)
+{
+    Q_UNUSED(on)
+    return false;
+}
+
+void MobileUIPrivate::setIconBadgeNumber(const int number)
+{
+    Q_UNUSED(number)
 }
 
 void MobileUIPrivate::backToHomeScreen()

@@ -62,7 +62,15 @@ public:
 
     void setScreenAlwaysOn(const bool on);
 
+    void setScreenSecure(const bool on);
+
+    void setHighRefreshRate(const bool value);
+
     void triggerHapticFeedback(const MobileUI::HapticFeedback type);
+
+    bool setTorch(const bool on);
+
+    void setIconBadgeNumber(const int number);
 
     void backToHomeScreen();
 };

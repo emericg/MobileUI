@@ -31,6 +31,7 @@
 #include <cmath>
 
 #include <UIKit/UIKit.h>
+#include <AVFoundation/AVFoundation.h>
 
 /* ************************************************************************** */
 
@@ -223,6 +224,18 @@ void MobileUIPrivate::setScreenAlwaysOn(const bool on)
     }
 }
 
+void MobileUIPrivate::setHighRefreshRate(const bool value)
+{
+    qDebug() << "iOS has no runtime refresh-rate switch. Use the application Info.plist instead.";
+    Q_UNUSED(value)
+}
+
+void MobileUIPrivate::setScreenSecure(const bool on)
+{
+    qWarning() << "iOS has no FLAG_SECURE implementation.";
+    Q_UNUSED(on)
+}
+
 /* ************************************************************************** */
 
 void MobileUIPrivate::triggerHapticFeedback(const MobileUI::HapticFeedback type)
@@ -262,6 +275,34 @@ void MobileUIPrivate::triggerHapticFeedback(const MobileUI::HapticFeedback type)
             generator = nil;
         } break;
     }
+}
+
+/* ************************************************************************** */
+
+bool MobileUIPrivate::setTorch(const bool on)
+{
+    AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+    if (!device || !device.hasTorch || !device.isTorchAvailable) return false;
+
+    NSError *error = nil;
+    if (![device lockForConfiguration:&error]) return false;
+
+    device.torchMode = on ? AVCaptureTorchModeOn : AVCaptureTorchModeOff;
+    [device unlockForConfiguration];
+
+    return on;
+}
+
+/* ************************************************************************** */
+
+void MobileUIPrivate::setIconBadgeNumber(const int number)
+{
+    // UIApplication must be touched on the main thread.
+    // Showing the badge requires the badge notification authorization to have been granted.
+    // Note: applicationIconBadgeNumber is deprecated since iOS 17.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [UIApplication sharedApplication].applicationIconBadgeNumber = (number > 0) ? number : 0;
+    });
 }
 
 /* ************************************************************************** */

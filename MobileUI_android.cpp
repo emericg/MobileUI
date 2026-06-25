@@ -29,6 +29,7 @@
 #include <QTimer>
 
 #include <QJniObject>
+#include <QJniEnvironment>
 
 #include <cmath>
 
@@ -36,6 +37,7 @@
 
 // WindowManager.LayoutParams
 #define FLAG_KEEP_SCREEN_ON                     0x00000080
+#define FLAG_SECURE                             0x00002000
 #define FLAG_TRANSLUCENT_STATUS                 0x04000000
 #define FLAG_TRANSLUCENT_NAVIGATION             0x08000000
 #define FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS       0x80000000
@@ -129,6 +131,24 @@ static QJniObject getDisplayCutout()
     }
 
     return QJniObject();
+}
+
+static QJniObject getAndroidDisplay()
+{
+    QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    if (!activity.isValid()) return QJniObject();
+
+    if (QNativeInterface::QAndroidApplication::sdkVersion() >= 30)
+    {
+        // Context.getDisplay() // Added in API level 30
+        return activity.callObjectMethod("getDisplay", "()Landroid/view/Display;");
+    }
+
+    // WindowManager.getDefaultDisplay() // Deprecated in API level 30
+    QJniObject wm = activity.callObjectMethod("getWindowManager", "()Landroid/view/WindowManager;");
+    if (!wm.isValid()) return QJniObject();
+
+    return wm.callObjectMethod("getDefaultDisplay", "()Landroid/view/Display;");
 }
 
 /* ************************************************************************** */
@@ -455,7 +475,7 @@ void MobileUIPrivate::setScreenLockOrientation(const MobileUI::ScreenLockOrienta
         if (activity.isValid())
         {
             activity.callMethod<void>("setRequestedOrientation", "(I)V", value);
-}
+        }
     });
 }
 
@@ -468,6 +488,72 @@ void MobileUIPrivate::setScreenAlwaysOn(const bool on)
             window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
         else
             window.callMethod<void>("clearFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+    });
+}
+
+void MobileUIPrivate::setScreenSecure(const bool on)
+{
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
+        QJniObject window = getAndroidWindow();
+
+        // FLAG_SECURE blocks screenshots/recording, hides the recent-apps thumbnail,
+        // and prevents mirroring to non-secure external displays.
+        if (on)
+            window.callMethod<void>("addFlags", "(I)V", FLAG_SECURE);
+        else
+            window.callMethod<void>("clearFlags", "(I)V", FLAG_SECURE);
+    });
+}
+
+void MobileUIPrivate::setHighRefreshRate(const bool value)
+{
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
+        QJniObject window = getAndroidWindow();
+        QJniObject layoutParams = window.callObjectMethod("getAttributes", "()Landroid/view/WindowManager$LayoutParams;");
+        if (!layoutParams.isValid()) return;
+
+        int modeId = 0; // 0 = no preference, the system picks the default mode
+
+        if (value)
+        {
+            QJniObject display = getAndroidDisplay();
+            QJniObject current = display.isValid() ? display.callObjectMethod("getMode", "()Landroid/view/Display$Mode;") : QJniObject();
+            QJniObject modes = display.isValid() ? display.callObjectMethod("getSupportedModes", "()[Landroid/view/Display$Mode;") : QJniObject();
+
+            if (current.isValid() && modes.isValid())
+            {
+                // Keep the current resolution, only look for a higher refresh rate
+                // (switching resolution would be a visible, unwanted change).
+                const int curW = current.callMethod<jint>("getPhysicalWidth", "()I");
+                const int curH = current.callMethod<jint>("getPhysicalHeight", "()I");
+                float bestRate = current.callMethod<jfloat>("getRefreshRate", "()F");
+                modeId = current.callMethod<jint>("getModeId", "()I");
+
+                QJniEnvironment env;
+                jobjectArray modeArray = modes.object<jobjectArray>();
+                const jsize count = env->GetArrayLength(modeArray);
+                for (jsize i = 0; i < count; ++i)
+                {
+                    QJniObject mode = QJniObject::fromLocalRef(env->GetObjectArrayElement(modeArray, i));
+                    if (!mode.isValid()) continue;
+
+                    if (mode.callMethod<jint>("getPhysicalWidth", "()I") != curW) continue;
+                    if (mode.callMethod<jint>("getPhysicalHeight", "()I") != curH) continue;
+
+                    const float rate = mode.callMethod<jfloat>("getRefreshRate", "()F");
+                    if (rate > bestRate)
+                    {
+                        bestRate = rate;
+                        modeId = mode.callMethod<jint>("getModeId", "()I");
+                    }
+                }
+            }
+        }
+
+        // WindowManager.LayoutParams.preferredDisplayModeId // Added in API level 23
+
+        layoutParams.setField("preferredDisplayModeId", modeId);
+        window.callMethod<void>("setAttributes", "(Landroid/view/WindowManager$LayoutParams;)V", layoutParams.object());
     });
 }
 
@@ -533,7 +619,7 @@ void MobileUIPrivate::triggerHapticFeedback(const MobileUI::HapticFeedback type)
     // the closest predefined effect (or one-shot duration on API 28).
 
     jint effect = EFFECT_TICK;
-    jlong ms = 25;
+    jlong ms = 20;
 
     switch (type)
     {
@@ -565,9 +651,74 @@ void MobileUIPrivate::triggerHapticFeedback(const MobileUI::HapticFeedback type)
         effect = EFFECT_DOUBLE_CLICK;
         ms = 60;
         break;
-}
+    }
 
     doVibrate(effect, ms);
+}
+
+/* ************************************************************************** */
+
+bool MobileUIPrivate::setTorch(const bool on)
+{
+    QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    if (!activity.isValid()) return false;
+
+    QJniObject serviceName = QJniObject::fromString("camera");
+    QJniObject cameraManager = activity.callObjectMethod("getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;",
+                                                         serviceName.object<jstring>());
+    if (!cameraManager.isValid()) return false;
+
+    QJniObject idList = cameraManager.callObjectMethod("getCameraIdList", "()[Ljava/lang/String;");
+    if (!idList.isValid()) return false;
+
+    QJniEnvironment env;
+    jobjectArray idArray = idList.object<jobjectArray>();
+    const jsize count = env->GetArrayLength(idArray);
+
+    // Pick a camera that has a flash unit, preferring the back-facing one.
+    QJniObject torchCameraId;
+    for (jsize i = 0; i < count; ++i)
+    {
+        QJniObject id = QJniObject::fromLocalRef(env->GetObjectArrayElement(idArray, i));
+        QJniObject chars = cameraManager.callObjectMethod("getCameraCharacteristics",
+                                                          "(Ljava/lang/String;)Landroid/hardware/camera2/CameraCharacteristics;",
+                                                          id.object<jstring>());
+        if (!chars.isValid()) continue;
+
+        // CameraCharacteristics.FLASH_INFO_AVAILABLE (Boolean)
+        QJniObject flashKey = QJniObject::getStaticObjectField("android/hardware/camera2/CameraCharacteristics",
+                                                               "FLASH_INFO_AVAILABLE",
+                                                               "Landroid/hardware/camera2/CameraCharacteristics$Key;");
+        QJniObject hasFlash = chars.callObjectMethod("get", "(Landroid/hardware/camera2/CameraCharacteristics$Key;)Ljava/lang/Object;",
+                                                     flashKey.object());
+        if (!hasFlash.isValid() || !hasFlash.callMethod<jboolean>("booleanValue", "()Z")) continue;
+
+        torchCameraId = id;
+
+        // CameraCharacteristics.LENS_FACING (Integer); LENS_FACING_BACK == 1
+        QJniObject facingKey = QJniObject::getStaticObjectField("android/hardware/camera2/CameraCharacteristics", "LENS_FACING",
+                                                               "Landroid/hardware/camera2/CameraCharacteristics$Key;");
+        QJniObject facing = chars.callObjectMethod("get", "(Landroid/hardware/camera2/CameraCharacteristics$Key;)Ljava/lang/Object;",
+                                                   facingKey.object());
+
+        if (facing.isValid() && facing.callMethod<jint>("intValue", "()I") == 1) break;
+    }
+
+    if (!torchCameraId.isValid()) return false;
+
+    cameraManager.callMethod<void>("setTorchMode", "(Ljava/lang/String;Z)V", torchCameraId.object<jstring>(), on);
+
+    // setTorchMode() may throw CameraAccessException; treat that as a failure.
+    if (env.checkAndClearExceptions()) return false;
+
+    return on;
+}
+
+/* ************************************************************************** */
+
+void MobileUIPrivate::setIconBadgeNumber(const int number)
+{
+    Q_UNUSED(number)
 }
 
 /* ************************************************************************** */

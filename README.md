@@ -27,8 +27,12 @@ You can see it in action in the [MobileUI demo](https://github.com/emericg/Mobil
 - Set screen brightness
 - Lock screen orientation
 - Lock screensaver
+- Toggle camera flash
 - Trigger haptic feedbacks (vibrations)
+- Android high screen refresh rate toggle
+- Android "secure screen" helper
 - Android "back button" helper
+- iOS application icon badge number
 
 
 ## Screenshots
@@ -74,21 +78,38 @@ Window {
         MobileUI.navbarColor = "blue"
         MobileUI.navbarTheme = MobileUI.Light
     }
-    
+
     // OR use bindings (for more dynamic use cases)
     Binding {
-            target: MobileUI
-            property: "statusbarTheme"
-            value: { return YourTheme.themeStatusbar }
+        target: MobileUI
+        property: "statusbarTheme"
+        value: { return YourTheme.themeStatusbar }
+    }
+    Binding {
+        target: MobileUI
+        property: "navbarColor"
+        value: {
+            if (something) return YourTheme.colorForeground
+            return YourTheme.colorBackground
         }
-        Binding {
-            target: MobileUI
-            property: "navbarColor"
-            value: {
-                if (something) return YourTheme.colorForeground
-                return YourTheme.colorBackground
-            }
+    }
+
+    // OR use our QML dispatcher (for more dynamic use cases, to bind values more easily)
+    MobileUI_dispatcher {
+        statusbarColor: "white"
+        statusbarTheme: MobileUI.Auto
+        
+        navbarColor: {
+            if (something) return YourTheme.colorForeground
+            return YourTheme.colorBackground
         }
+        navbarTheme: MobileUI.Auto
+
+        // Also covers the screen settings!
+        screenAlwaysOn: true
+        screenOrientation: MobileUI.Portrait
+        screenBrightness: 80
+    }
 
     // Use SafeAreas however you see fit
     Rectangle {
@@ -102,6 +123,11 @@ Window {
     }
 }
 ```
+
+Bindings forward automatically (e.g. `statusbarColor: YourTheme.colorStatusbar`
+re-applies whenever your theme changes), so you don't need `Binding` blocks. It
+only exposes the writable settings; read-only values (safe areas, device theme,
+bar heights) stay on the `MobileUI` singleton. Declare a single instance.
 
 You can also use MobileUI directly from C++ code if you want.
 
@@ -362,13 +388,50 @@ MobileUI.setScreenAlwaysOn(true)
 MobileUI.screenAlwaysOn = true
 ```
 
-### Haptic feedback
+### Secure screen
 
-Trigger a haptic feedback. Call `vibrate()` for a default (light) feedback, or pass a `MobileUI.HapticFeedback` value to pick a more specific feedback.
+Mark the window as secure, to exclude its content from screen captures.
+
+Either call `setScreenSecure(true/false)` or set `screenSecure: true/false` (in QML).
 
 ```qml
-MobileUI.vibrate() // default light feedback
-MobileUI.vibrate(MobileUI.HapticHeavy)
+MobileUI.setScreenSecure(true)
+MobileUI.screenSecure = true
+```
+
+On Android this sets the window `FLAG_SECURE`: the content is blocked from screenshots and screen recordings, hidden from the recent-apps thumbnail, and not mirrored to non-secure external displays.
+
+> [!IMPORTANT]
+> There is no `FLAG_SECURE` equivalent on iOS, a screenshot or a screen recording cannot be blocked.
+
+### High refresh rate
+
+Request the highest screen refresh rate available (e.g. 90/120 Hz on devices that support it).
+
+Either call `setHighRefreshRate(true/false)` or set `screenHighRefreshRate: true/false` (in QML).
+
+```qml
+MobileUI.setHighRefreshRate(true)
+MobileUI.screenHighRefreshRate = true
+```
+
+On Android this asks the window for the display mode with the highest refresh rate **at the current resolution** (it never switches resolution). Set it back to `false` to hand control back to the system.
+
+Opting into ProMotion (120 Hz) on iOS is not a runtime call: it is a build-time decision.
+You enable it with this key intto your application `Info.plist`:
+
+```xml
+<key>CADisableMinimumFrameDurationOnPhone</key>
+<true/>
+```
+
+### Haptic feedback
+
+Trigger a haptic feedback. Call `hapticFeedback()` or `vibrate()` for a default (light) feedback, or pass a `MobileUI.HapticFeedback` value to pick a more specific feedback.
+
+```qml
+MobileUI.hapticFeedback() // default light feedback
+MobileUI.hapticFeedback(MobileUI.HapticHeavy)
 ```
 
 Available feedbacks:
@@ -391,11 +454,42 @@ These map directly to the iOS feedback generators (selection / impact / notifica
 
 No model of iPad includes a haptic engine. Android tablets usually have one.
 
-On Android, the `android.permission.VIBRATE` permission must be present in the manifest.
+> On Android, the `android.permission.VIBRATE` permission must be present in the manifest.
+
+### Torch
+
+Toggle the rear camera flash LED (torch / flashlight).
+
+Either call `setTorchEnabled(true/false)` or set `torchEnabled: true/false` (in QML).
+
+```qml
+MobileUI.setTorchEnabled(true)
+MobileUI.torchEnabled = true
+```
+
+`torchEnabled` reflects the state actually applied: on a device without a rear flash the request is silently ignored and the property stays `false`.
+
+On Android no permission is required, the `CAMERA` permission is *not* needed to use `setTorchMode()`.
+### Application icon badge
+
+> [!NOTE]
+> **iOS only.**
+
+Set the number shown on the application icon badge.
+
+```qml
+MobileUI.iconBadgeNumber = 3 
+MobileUI.iconBadgeNumber = 0 // clear the badge
+```
+
+> On iOS, the `badge notification` authorization must be granted by the user for the badges to show.
+
+> Android has no standard launcher badge API (badges are tied to notifications and are launcher specific) so this will do nothing.
 
 ### Back to home screen
 
-#### Android
+> [!NOTE]
+> **Android only.**
 
 You can use this method to bypass the default Qt behavior for the Android back button,
 which is to kill the application instead of doing what every single Android application does,
@@ -428,10 +522,6 @@ Going back to the home screen from an application is not possible on iOS, and th
 ## Caveats
 
 - When using Qt 6.9+, Qt has introduced its own "SafeArea" system. Because it's still fairly buggy, and not really powerful enough to match MobileUI features, I would advise not to use it just yet, and for that you'll need to use regular `Window` instead of `ApplicationWindow` QML item.
-
-### iOS
-
-- It looks like forcing the screen orientation on an iPad is not allowed.
 
 ### Android
 

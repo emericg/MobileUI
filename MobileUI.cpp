@@ -561,6 +561,30 @@ void MobileUI::setScreenAlwaysOn(const bool value)
 
 /* ************************************************************************** */
 
+void MobileUI::setHighRefreshRate(const bool value)
+{
+    const bool changed = (value != m_screenHighRefreshRate);
+
+    m_screenHighRefreshRate = value;
+    d->setHighRefreshRate(value);
+
+    if (changed) Q_EMIT screenUpdated();
+}
+
+/* ************************************************************************** */
+
+void MobileUI::setScreenSecure(const bool value)
+{
+    const bool changed = (value != m_screenSecure);
+
+    m_screenSecure = value;
+    d->setScreenSecure(value);
+
+    if (changed) Q_EMIT screenUpdated();
+}
+
+/* ************************************************************************** */
+
 void MobileUI::hapticFeedback(const MobileUI::HapticFeedback type)
 {
     d->triggerHapticFeedback(type);
@@ -572,9 +596,38 @@ void MobileUI::vibrate(const MobileUI::HapticFeedback type)
 
 /* ************************************************************************** */
 
+void MobileUI::setTorchEnabled(const bool on)
+{
+    // setTorch() returns the resulting state, which may differ from the request
+    const bool result = d->setTorch(on);
+
+    if (result != m_torchEnabled)
+    {
+        m_torchEnabled = result;
+        Q_EMIT torchUpdated();
+    }
+}
+
+/* ************************************************************************** */
+
 void MobileUI::backToHomeScreen()
 {
     d->backToHomeScreen();
+}
+
+/* ************************************************************************** */
+
+void MobileUI::setIconBadgeNumber(const int number)
+{
+    const int badge = (number > 0) ? number : 0;
+
+    if (m_iconBadgeNumber != badge)
+    {
+        m_iconBadgeNumber = badge;
+        d->setIconBadgeNumber(badge);
+
+        Q_EMIT iconBadgeUpdated();
+    }
 }
 
 /* ************************************************************************** */
