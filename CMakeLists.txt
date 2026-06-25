@@ -8,7 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ################################################################################
 
 # Generic sources
-set(CORE_SOURCES MobileUI.h MobileUI.cpp)
+set(CORE_SOURCES
+    MobileUI.cpp MobileUI.h MobileUI_private.h
+    MobileUI_QmlDispatcher.cpp MobileUI_QmlDispatcher.h )
 
 # OS specific sources & dependencies
 if(ANDROID)

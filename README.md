@@ -98,17 +98,26 @@ Window {
     MobileUI_dispatcher {
         statusbarColor: "white"
         statusbarTheme: MobileUI.Auto
-        
+
         navbarColor: {
+            // you don't need these pesky `Binding` blocks anymore!
             if (something) return YourTheme.colorForeground
             return YourTheme.colorBackground
         }
         navbarTheme: MobileUI.Auto
 
-        // Also covers the screen settings!
+        // Also covers the screen and device settings!
         screenAlwaysOn: true
-        screenOrientation: MobileUI.Portrait
+        screenLockedOrientation: MobileUI.Portrait
         screenBrightness: 80
+        screenSecure: false
+        screenHighRefreshRate: true
+        torchEnabled: false
+        iconBadgeNumber: 0
+
+        // Read-only values (safe areas, device theme, bar heights) stay on the MobileUI singleton
+
+        // Declare a single instance. Or else :/
     }
 
     // Use SafeAreas however you see fit
@@ -123,11 +132,6 @@ Window {
     }
 }
 ```
-
-Bindings forward automatically (e.g. `statusbarColor: YourTheme.colorStatusbar`
-re-applies whenever your theme changes), so you don't need `Binding` blocks. It
-only exposes the writable settings; read-only values (safe areas, device theme,
-bar heights) stay on the `MobileUI` singleton. Declare a single instance.
 
 You can also use MobileUI directly from C++ code if you want.
 
@@ -149,7 +153,7 @@ int main() {
 ```
 
 
-## Quick documentation
+## Documentation
 
 ### Window modes
 
