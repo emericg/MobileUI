@@ -80,6 +80,7 @@ class MobileUI : public QObject
 
     Q_PROPERTY(int statusbarHeight READ getStatusbarHeight NOTIFY safeAreaUpdated)
     Q_PROPERTY(int navbarHeight READ getNavbarHeight NOTIFY safeAreaUpdated)
+    Q_PROPERTY(int keyboardHeight READ getKeyboardHeight NOTIFY keyboardUpdated)
 
     Q_PROPERTY(int safeAreaTop READ getSafeAreaTop NOTIFY safeAreaUpdated)
     Q_PROPERTY(int safeAreaLeft READ getSafeAreaLeft NOTIFY safeAreaUpdated)
@@ -94,6 +95,7 @@ Q_SIGNALS:
     void devicethemeUpdated();  //!< Emitted when the device OS theme (light/dark mode) changes.
     void statusbarUpdated();    //!< Emitted when a status bar color or theme is set.
     void navbarUpdated();       //!< Emitted when a navigation bar color or theme is set.
+    void keyboardUpdated();     //!< Emitted when the on-screen keyboard height changes (shown, hidden or resized).
     void safeAreaUpdated();     //!< Emitted when the system bar heights or the screen safe areas are changed (by or rotation or some other reason).
     void screenUpdated();       //!< Emitted when a screen related property (always-on, orientation, brightness) is set.
 
@@ -443,6 +445,18 @@ public:
      */
     Q_INVOKABLE void vibrate();
 
+    // Keyboard ////////////////////////////////////////////////////////////////
+
+    /*!
+     * \brief Get the height of the on-screen (virtual) keyboard.
+     * \return the keyboard height in pixels, or 0 when the keyboard is hidden.
+     *
+     * Useful to reserve room / scroll content into view while typing.
+     * The value tracks the keyboard as it is shown, hidden or resized.
+     * The value doesn't update per frame while opening / closing animations are running.
+     */
+    int getKeyboardHeight() const { return m_keyboardHeight; }
+
     /*!
      * \brief Go back to Android home screen.
      *
@@ -515,8 +529,14 @@ private:
     bool m_screenAlwaysOn = false;
     MobileUI::ScreenOrientation m_screenOrientation = MobileUI::Unlocked;
 
+    // On-screen keyboard height (in pixels)
+    int m_keyboardHeight = 0;
+
     //! Connect to screen orientation, window visibility and theme changes.
     void connectSignals();
+
+    //! Re-read the on-screen keyboard height from Qt's input method and notify on change.
+    void refreshKeyboardHeight();
 
     //! Get a theme from a given color (when in "auto" mode only).
     MobileUI::Theme deriveStatusbarTheme(const QColor &color) const;

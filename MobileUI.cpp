@@ -26,6 +26,7 @@
 
 #include <QGuiApplication>
 #include <QStyleHints>
+#include <QInputMethod>
 #include <QQmlEngine>
 #include <QScreen>
 #include <QWindow>
@@ -52,6 +53,13 @@ MobileUI *MobileUI::create(QQmlEngine *, QJSEngine *)
 MobileUI::MobileUI(QObject *parent) : QObject(parent)
 {
     d = std::make_unique<MobileUIPrivate>();
+
+    // Track the on-screen keyboard height through Qt's input method (cross-platform).
+    if (QInputMethod *im = qApp->inputMethod())
+    {
+        connect(im, &QInputMethod::keyboardRectangleChanged, this, &MobileUI::refreshKeyboardHeight);
+        connect(im, &QInputMethod::visibleChanged, this, &MobileUI::refreshKeyboardHeight);
+    }
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     // Set up the retry timers used by refreshMobileUI()
@@ -528,7 +536,34 @@ void MobileUI::setScreenBrightness(const int value)
 void MobileUI::vibrate()
 {
     d->vibrate();
+
+/* ************************************************************************** */
+
+void MobileUI::refreshKeyboardHeight()
+{
+    // Important caveat:
+    // This is driven by Qt's input-method signals (keyboardRectangleChanged / visibleChanged)
+    // Implementing a real WindowInsets(Animation) native listener on Android requires
+    // a Java/Kotlin helper class, which is... Too heavy...
+    // In practice Qt fires these signals when the keyboard shows/hides, which is
+    // enough for everything except tracking the keyboard's slide-in/out per frame animation.
+
+    int height = d->getKeyboardHeight();
+    if (height < 0)
+    {
+        // Fall back to Qt's input method
+        QInputMethod *im = qApp->inputMethod();
+        height = (im && im->isVisible()) ? qRound(im->keyboardRectangle().height()) : 0;
+    }
+
+    if (height != m_keyboardHeight)
+    {
+        m_keyboardHeight = height;
+        Q_EMIT keyboardUpdated();
+    }
 }
+
+/* ************************************************************************** */
 
 void MobileUI::backToHomeScreen()
 {

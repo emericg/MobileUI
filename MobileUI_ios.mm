@@ -150,6 +150,11 @@ void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight
     }
 }
 
+int MobileUIPrivate::getKeyboardHeight()
+{
+    return -1;
+}
+
 /* ************************************************************************** */
 
 void MobileUIPrivate::setScreenAlwaysOn(const bool on)

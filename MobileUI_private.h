@@ -53,6 +53,8 @@ public:
     void getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight,
                             int &top, int &left, int &right, int &bottom);
 
+    int getKeyboardHeight();
+
     void setScreenAlwaysOn(const bool on);
 
     void setScreenOrientation(const MobileUI::ScreenOrientation orientation);

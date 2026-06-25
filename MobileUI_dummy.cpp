@@ -81,6 +81,11 @@ void MobileUIPrivate::vibrate()
     return;
 }
 
+int MobileUIPrivate::getKeyboardHeight()
+{
+    return -1;
+}
+
 void MobileUIPrivate::backToHomeScreen()
 {
     return;

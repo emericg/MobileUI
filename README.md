@@ -23,6 +23,7 @@ You can see it in action in the [MobileUI demo](https://github.com/emericg/Mobil
 - Set Android `status bar` and `navigation bar` colors and theme
 - Set iOS `status bar` theme (iOS has no notion of status bar color, and has no navigation bar)
 - Get device theme (light or dark mode)
+- Get device system bars and keyboard heights
 - Get device `safe areas`
 - Lock screensaver
 - Set screen orientation
@@ -294,6 +295,15 @@ These values are changed automatically when the screen is rotated.
 
 safeAreaTop and safeAreaBottom will integrate the system bar height if needed.
 
+### Keyboard height
+
+> keyboardHeight
+
+The height of the on-screen virtual keyboard, in pixels, DPI adjusted, or 0 when the keyboard is hidden.
+
+Useful to reserve room or scroll content into view while the user is typing.
+
+On Android the value is read natively, elsewhere it falls back to Qt's input method value. MobileUI updates this value as the keyboard is shown, hidden or resized. The value doesn't update per frame while opening / closing animations are running.
 
 ### Lock screensaver
 

@@ -371,6 +371,23 @@ void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight
 
 /* ************************************************************************** */
 
+int MobileUIPrivate::getKeyboardHeight()
+{
+    return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() -> int {
+            // WindowInsets.Type.ime() // Added in API level 30
+            if (QNativeInterface::QAndroidApplication::sdkVersion() < 30) return -1;
+
+            QJniObject insets = getAndroidRootWindowInsets();
+            if (!insets.isValid()) return -1;
+
+            return pxToDip(insetField(insets, "ime", "bottom"));
+        })
+    .result()
+    .toInt();
+}
+
+/* ************************************************************************** */
+
 void MobileUIPrivate::setScreenAlwaysOn(const bool on)
 {
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
