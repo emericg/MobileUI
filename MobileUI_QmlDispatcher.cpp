@@ -31,16 +31,16 @@ MobileUI_QmlDispatcher::MobileUI_QmlDispatcher(QObject *parent) : QObject(parent
 
     connect(mui, &MobileUI::statusbarUpdated, this, [this]() {
         Q_EMIT statusbarColorChanged();
-        Q_EMIT statusbarColorHiddenChanged();
+        Q_EMIT statusbarContentColorChanged();
         Q_EMIT statusbarThemeChanged();
     });
     connect(mui, &MobileUI::navbarUpdated, this, [this]() {
         Q_EMIT navbarColorChanged();
-        Q_EMIT navbarColorHiddenChanged();
+        Q_EMIT navbarContentColorChanged();
         Q_EMIT navbarThemeChanged();
     });
     connect(mui, &MobileUI::screenUpdated, this, [this]() {
-        Q_EMIT screenLockedOrientationChanged();
+        Q_EMIT screenLockOrientationChanged();
         Q_EMIT screenBrightnessChanged();
         Q_EMIT screenAlwaysOnChanged();
         Q_EMIT screenSecureChanged();
@@ -130,12 +130,12 @@ void MobileUI_QmlDispatcher::setScreenAlwaysOn(const bool on)
     MobileUI::getInstance()->setScreenAlwaysOn(on);
 }
 
-MobileUI::ScreenLockOrientation MobileUI_QmlDispatcher::screenLockedOrientation() const
+MobileUI::ScreenLockOrientation MobileUI_QmlDispatcher::screenLockOrientation() const
 {
     return MobileUI::getInstance()->getScreenLockOrientation();
 }
 
-void MobileUI_QmlDispatcher::setScreenLockedOrientation(const MobileUI::ScreenLockOrientation orientation)
+void MobileUI_QmlDispatcher::setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation)
 {
     MobileUI::getInstance()->setScreenLockOrientation(orientation);
 }

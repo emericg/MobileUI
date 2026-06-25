@@ -53,7 +53,7 @@ class MobileUIPrivate;
  * - Screensaver inhibition.
  * - Haptic feedbacks.
  * - Torch mode (rear camera flash LED).
- * - Android "safe screen" helper.
+ * - Android "secure screen" helper.
  * - Android "high refresh rate" helper.
  * - Android "back to home screen" helper.
  *
@@ -93,7 +93,7 @@ class MobileUI : public QObject
     Q_PROPERTY(int safeAreaRight READ getSafeAreaRight NOTIFY safeAreaUpdated)
     Q_PROPERTY(int safeAreaBottom READ getSafeAreaBottom NOTIFY safeAreaUpdated)
 
-    Q_PROPERTY(ScreenLockOrientation screenLockedOrientation READ getScreenLockOrientation WRITE setScreenLockOrientation NOTIFY screenUpdated)
+    Q_PROPERTY(ScreenLockOrientation screenLockOrientation READ getScreenLockOrientation WRITE setScreenLockOrientation NOTIFY screenUpdated)
     Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenUpdated)
     Q_PROPERTY(bool screenAlwaysOn READ getScreenAlwaysOn WRITE setScreenAlwaysOn NOTIFY screenUpdated)
     Q_PROPERTY(bool screenSecure READ getScreenSecure WRITE setScreenSecure NOTIFY screenUpdated)
@@ -117,7 +117,7 @@ public:
     /*!
      * \brief Get the process-wide MobileUI singleton instance.
      *
-     * Use this to access the instance rom C++.
+     * Use this to access the instance from C++.
      * The same instance is shared with QML.
      */
     static MobileUI *getInstance();
@@ -224,8 +224,8 @@ public:
      * When the color is opaque and the status bar theme is set to Auto, a matching
      * Light/Dark theme is derived automatically from the color perceived luminance.
      *
-     * When an invalid color is set, the hidden color is cleared, and Auto derivation
-     * falls back to navbarColor, and if that's not set the theme is cleared too,
+     * When an invalid color is set, the content color is cleared, and Auto derivation
+     * falls back to statusbarColor, and if that's not set the theme is cleared too,
      * and the theme control will be back to the OS.
      */
     void setStatusbarContentColor(const QColor &color);
@@ -285,7 +285,7 @@ public:
      * When the color is opaque and the navigation bar theme is set to Auto, a matching
      * Light/Dark theme is derived automatically from the color perceived luminance.
      *
-     * When an invalid color is set, the hidden color is cleared, and Auto derivation
+     * When an invalid color is set, the content color is cleared, and Auto derivation
      * falls back to navbarColor, and if that's not set the theme is cleared too,
      * and the theme control will be back to the OS.
      */
@@ -666,7 +666,7 @@ private:
     void setNavbarTheme_fromColor(const QColor &color);
 
     //! When in "auto" mode, (re)derive the theme from the reference color.
-    //! Hidden color first if set, then the system bar color, or if neither is usable
+    //! Content color first if set, then the system bar color, or if neither is usable
     //! we hand control back to the OS. The icons keep their current look until the OS changes them.
     void setStatusbarTheme_fromColor_refresh();
     void setNavbarTheme_fromColor_refresh();

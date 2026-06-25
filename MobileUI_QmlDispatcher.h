@@ -54,7 +54,7 @@
  * singleton and holds no state of its own. It only exposes the writable settings
  * (read-only values like safe areas or the device theme stay on the singleton).
  *
- * Declare a single instance, of face troubles (the last instance will win).
+ * Declare a single instance, or face troubles (the last instance will win)...
  */
 class MobileUI_QmlDispatcher : public QObject
 {
@@ -62,14 +62,14 @@ class MobileUI_QmlDispatcher : public QObject
     QML_NAMED_ELEMENT(MobileUI_dispatcher)
 
     Q_PROPERTY(QColor statusbarColor READ statusbarColor WRITE setStatusbarColor NOTIFY statusbarColorChanged)
-    Q_PROPERTY(QColor statusbarContentColor READ statusbarContentColor WRITE setStatusbarContentColor NOTIFY statusbarColorHiddenChanged)
+    Q_PROPERTY(QColor statusbarContentColor READ statusbarContentColor WRITE setStatusbarContentColor NOTIFY statusbarContentColorChanged)
     Q_PROPERTY(MobileUI::Theme statusbarTheme READ statusbarTheme WRITE setStatusbarTheme NOTIFY statusbarThemeChanged)
 
     Q_PROPERTY(QColor navbarColor READ navbarColor WRITE setNavbarColor NOTIFY navbarColorChanged)
-    Q_PROPERTY(QColor navbarContentColor READ navbarContentColor WRITE setNavbarContentColor NOTIFY navbarColorHiddenChanged)
+    Q_PROPERTY(QColor navbarContentColor READ navbarContentColor WRITE setNavbarContentColor NOTIFY navbarContentColorChanged)
     Q_PROPERTY(MobileUI::Theme navbarTheme READ navbarTheme WRITE setNavbarTheme NOTIFY navbarThemeChanged)
 
-    Q_PROPERTY(MobileUI::ScreenLockOrientation screenLockedOrientation READ screenLockedOrientation WRITE setScreenLockedOrientation NOTIFY screenLockedOrientationChanged)
+    Q_PROPERTY(MobileUI::ScreenLockOrientation screenLockOrientation READ screenLockOrientation WRITE setScreenLockOrientation NOTIFY screenLockOrientationChanged)
     Q_PROPERTY(int screenBrightness READ screenBrightness WRITE setScreenBrightness NOTIFY screenBrightnessChanged)
     Q_PROPERTY(bool screenAlwaysOn READ screenAlwaysOn WRITE setScreenAlwaysOn NOTIFY screenAlwaysOnChanged)
     Q_PROPERTY(bool screenSecure READ screenSecure WRITE setScreenSecure NOTIFY screenSecureChanged)
@@ -100,8 +100,8 @@ public:
     MobileUI::Theme navbarTheme() const;
     void setNavbarTheme(const MobileUI::Theme theme);
 
-    MobileUI::ScreenLockOrientation screenLockedOrientation() const;
-    void setScreenLockedOrientation(const MobileUI::ScreenLockOrientation orientation);
+    MobileUI::ScreenLockOrientation screenLockOrientation() const;
+    void setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation);
 
     int screenBrightness() const;
     void setScreenBrightness(const int value);
@@ -123,12 +123,12 @@ public:
 
 Q_SIGNALS:
     void statusbarColorChanged();
-    void statusbarColorHiddenChanged();
+    void statusbarContentColorChanged();
     void statusbarThemeChanged();
     void navbarColorChanged();
-    void navbarColorHiddenChanged();
+    void navbarContentColorChanged();
     void navbarThemeChanged();
-    void screenLockedOrientationChanged();
+    void screenLockOrientationChanged();
     void screenBrightnessChanged();
     void screenAlwaysOnChanged();
     void screenSecureChanged();
