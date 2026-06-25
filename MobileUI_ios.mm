@@ -35,6 +35,12 @@
 
 /* ************************************************************************** */
 
+#if !__has_feature(objc_arc)
+#error "MobileUI_ios.mm must be compiled with ARC (-fobjc-arc) !!!"
+#endif
+
+/* ************************************************************************** */
+
 @interface QIOSViewController : UIViewController
 @property (nonatomic, assign) BOOL prefersStatusBarHidden;
 @property (nonatomic, assign) UIStatusBarAnimation preferredStatusBarUpdateAnimation;
