@@ -54,6 +54,7 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
 {
     d = std::make_unique<MobileUIPrivate>();
 
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     // Track the on-screen keyboard height through Qt's input method (cross-platform).
     if (QInputMethod *im = qApp->inputMethod())
     {
@@ -61,7 +62,6 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
         connect(im, &QInputMethod::visibleChanged, this, &MobileUI::refreshKeyboardHeight);
     }
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     // Set up the retry timers used by refreshMobileUI()
     for (unsigned i = 0; i < 4; ++i)
     {
@@ -139,6 +139,7 @@ void MobileUI::connectSignals()
 
 void MobileUI::refreshMobileUI()
 {
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     // Re-apply the native bar colors / themes (lost on rotation or resume)
     refreshSystemBars();
 
@@ -151,6 +152,7 @@ void MobileUI::refreshMobileUI()
     {
         m_retryTimers[i].start();
     }
+#endif
 }
 
 /* ************************************************************************** */
