@@ -71,8 +71,8 @@
 #define DEFAULT_AMPLITUDE                       0xffffffff
 #define EFFECT_CLICK                            0x00000000
 #define EFFECT_DOUBLE_CLICK                     0x00000001
-#define EFFECT_HEAVY_CLICK                      0x00000005
 #define EFFECT_TICK                             0x00000002
+#define EFFECT_HEAVY_CLICK                      0x00000005
 
 // Screen orientation
 #define SCREEN_ORIENTATION_UNSPECIFIED         -1
@@ -388,40 +388,6 @@ int MobileUIPrivate::getKeyboardHeight()
 
 /* ************************************************************************** */
 
-void MobileUIPrivate::setScreenAlwaysOn(const bool on)
-{
-    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
-        QJniObject window = getAndroidWindow();
-
-        if (on)
-            window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
-        else
-            window.callMethod<void>("clearFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
-    });
-}
-
-void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
-{
-    int value = SCREEN_ORIENTATION_UNSPECIFIED;
-
-    if (orientation == MobileUI::Portrait) value = SCREEN_ORIENTATION_PORTRAIT;
-    else if (orientation == MobileUI::Portrait_upsidedown) value = SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-    else if (orientation == MobileUI::Portrait_sensor) value = SCREEN_ORIENTATION_SENSOR_PORTRAIT;
-    else if (orientation == MobileUI::Landscape_left) value = SCREEN_ORIENTATION_LANDSCAPE;
-    else if (orientation == MobileUI::Landscape_right) value = SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
-    else if (orientation == MobileUI::Landscape_sensor) value = SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
-
-    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([value]() {
-        QJniObject activity = QNativeInterface::QAndroidApplication::context();
-        if (activity.isValid())
-        {
-            activity.callMethod<void>("setRequestedOrientation", "(I)V", value);
-        }
-    });
-}
-
-/* ************************************************************************** */
-
 int MobileUIPrivate::getScreenBrightness()
 {
     return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([] {
@@ -473,12 +439,45 @@ void MobileUIPrivate::setScreenBrightness(const int value)
 
 /* ************************************************************************** */
 
-void MobileUIPrivate::vibrate()
+void MobileUIPrivate::setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation)
+{
+    int value = SCREEN_ORIENTATION_UNSPECIFIED;
+
+    if (orientation == MobileUI::Portrait) value = SCREEN_ORIENTATION_PORTRAIT;
+    else if (orientation == MobileUI::Portrait_upsidedown) value = SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+    else if (orientation == MobileUI::Portrait_sensor) value = SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+    else if (orientation == MobileUI::Landscape_left) value = SCREEN_ORIENTATION_LANDSCAPE;
+    else if (orientation == MobileUI::Landscape_right) value = SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+    else if (orientation == MobileUI::Landscape_sensor) value = SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([value]() {
+        QJniObject activity = QNativeInterface::QAndroidApplication::context();
+        if (activity.isValid())
+        {
+            activity.callMethod<void>("setRequestedOrientation", "(I)V", value);
+}
+    });
+}
+
+void MobileUIPrivate::setScreenAlwaysOn(const bool on)
+{
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
+        QJniObject window = getAndroidWindow();
+
+        if (on)
+            window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+        else
+            window.callMethod<void>("clearFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+    });
+}
+
+/* ************************************************************************** */
+
+static QJniObject getVibrator()
 {
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
-    if (!activity.isValid()) return;
+    if (!activity.isValid()) return QJniObject();
 
-    QJniObject vibrator;
     if (QNativeInterface::QAndroidApplication::sdkVersion() >= 31)
     {
         // vibrator_manager // Added in API level 31
@@ -488,16 +487,19 @@ void MobileUIPrivate::vibrate()
                                                        name.object<jstring>());
         if (manager.isValid())
         {
-            vibrator = manager.callObjectMethod("getDefaultVibrator", "()Landroid/os/Vibrator;");
+            return manager.callObjectMethod("getDefaultVibrator", "()Landroid/os/Vibrator;");
         }
-    }
-    else
-    {
-        QJniObject name = QJniObject::fromString("vibrator");
-        vibrator = activity.callObjectMethod("getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;",
-                                             name.object<jstring>());
+        return QJniObject();
     }
 
+    QJniObject name = QJniObject::fromString("vibrator");
+    return activity.callObjectMethod("getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;",
+                                     name.object<jstring>());
+}
+
+static void doVibrate(jint predefinedEffect, jlong oneShotMs)
+{
+    QJniObject vibrator = getVibrator();
     if (!vibrator.isValid() || !vibrator.callMethod<jboolean>("hasVibrator", "()Z")) return;
 
     QJniObject effect;
@@ -508,22 +510,64 @@ void MobileUIPrivate::vibrate()
         // a nicer, system-tuned effect (EFFECT_TICK/CLICK/HEAVY_CLICK/DOUBLE_CLICK)
         effect = QJniObject::callStaticObjectMethod("android/os/VibrationEffect",
                                                     "createPredefined", "(I)Landroid/os/VibrationEffect;",
-                                                    static_cast<jint>(EFFECT_TICK));
+                                                    predefinedEffect);
     }
     else
     {
         // createOneShot() // Added in API level 26
 
-        // a short 25 ms one-shot vibration at the default amplitude
         effect = QJniObject::callStaticObjectMethod("android/os/VibrationEffect",
                                                     "createOneShot", "(JI)Landroid/os/VibrationEffect;",
-                                                    static_cast<jlong>(25), static_cast<jint>(DEFAULT_AMPLITUDE));
+                                                    oneShotMs, static_cast<jint>(DEFAULT_AMPLITUDE));
     }
 
     if (effect.isValid())
     {
         vibrator.callMethod<void>("vibrate", "(Landroid/os/VibrationEffect;)V", effect.object<jobject>());
     }
+}
+
+void MobileUIPrivate::triggerHapticFeedback(const MobileUI::HapticFeedback type)
+{
+    // Android has no notification/selection haptics, so we map each style to
+    // the closest predefined effect (or one-shot duration on API 28).
+
+    jint effect = EFFECT_TICK;
+    jlong ms = 25;
+
+    switch (type)
+    {
+    case MobileUI::HapticSelection:
+        effect = EFFECT_TICK;
+        ms = 20;
+        break;
+    case MobileUI::HapticLight:
+        effect = EFFECT_TICK;
+        ms = 20;
+        break;
+    case MobileUI::HapticMedium:
+        effect = EFFECT_CLICK;
+        ms = 30;
+        break;
+    case MobileUI::HapticHeavy:
+        effect = EFFECT_HEAVY_CLICK;
+        ms = 40;
+        break;
+    case MobileUI::HapticSuccess:
+        effect = EFFECT_HEAVY_CLICK;
+        ms = 30;
+        break;
+    case MobileUI::HapticWarning:
+        effect = EFFECT_DOUBLE_CLICK;
+        ms = 40;
+        break;
+    case MobileUI::HapticError:
+        effect = EFFECT_DOUBLE_CLICK;
+        ms = 60;
+        break;
+}
+
+    doVibrate(effect, ms);
 }
 
 /* ************************************************************************** */

@@ -11,11 +11,10 @@ You can see it in action in the [MobileUI demo](https://github.com/emericg/Mobil
 > Supports Android 9+ (API 28). Tested up to Android 16 (API 36) devices.
 
 > [!IMPORTANT]
-> If you want the modern architecture but without the QML singleton for MobileUI, you can still use the **LEGACY** 'v1' branch.  
-> It could help you migrate your application from an older MobileUI version. Same requirements (Qt 6.8+ and CMake).  
+> If you want a more modern version than v0, but with the same API / usage, and a bit higher requirements (Qt 6.8+ and CMake), you can use the **LEGACY** 'v1' branch.  
 
 > [!IMPORTANT]
-> If you need a QMake build system, or support for Qt5 / earlier Qt6 version, you can still use the **LEGACY** 'v0' branch.  
+> If you need a QMake build system, or support for Qt5 / earlier Qt6 version, you can use the **LEGACY** 'v0' branch.  
 
 
 ## Features
@@ -25,11 +24,11 @@ You can see it in action in the [MobileUI demo](https://github.com/emericg/Mobil
 - Get device theme (light or dark mode)
 - Get device system bars and keyboard heights
 - Get device `safe areas`
-- Lock screensaver
-- Set screen orientation
 - Set screen brightness
-- Trigger haptic feedback (vibration)
-- Android back button helper
+- Lock screen orientation
+- Lock screensaver
+- Trigger haptic feedbacks (vibrations)
+- Android "back button" helper
 
 
 ## Screenshots
@@ -165,7 +164,7 @@ That is the default mode on iOS. This is the mandatory default on Android 15+ (A
 See Android best practices: https://developer.android.com/design/ui/mobile/guides/foundations/system-bars
 
 > [!TIP]
-> That is the mode we really recommand! It offers the most flexibility, but you'll need to handle the space occupied by the status and navigation bars yourself.
+> The "edge to edge" mode is the one we really recommand! It offers the most flexibility, matches modern standards, but you'll need to handle the space occupied by the status and navigation bars yourself.
 
 #### Full screen / "immersive" mode
 
@@ -305,43 +304,6 @@ Useful to reserve room or scroll content into view while the user is typing.
 
 On Android the value is read natively, elsewhere it falls back to Qt's input method value. MobileUI updates this value as the keyboard is shown, hidden or resized. The value doesn't update per frame while opening / closing animations are running.
 
-### Lock screensaver
-
-Either call `setScreenAlwaysOn(true/false)` or set `screenAlwaysOn: true/false` (in QML) to disable/re-enable the device screensaver.
-
-```qml
-MobileUI.setScreenAlwaysOn(true)
-MobileUI.screenAlwaysOn = true
-```
-
-### Set screen orientation
-
-This will force the device screen orientation into one of the available values.  
-This cannot be used to read the actual device orientation.  
-
-Either call `setScreenOrientation(MobileUI.ScreenOrientation)` or set `screenOrientation: MobileUI.ScreenOrientation` (in QML).
-
-```qml
-MobileUI.setScreenOrientation(MobileUI.Landscape_left)
-MobileUI.screenOrientation = MobileUI.Landscape_right
-```
-
-Available orientations:
-
-> Unlocked
-
-> Portrait
-
-> Portrait_upsidedown
-
-> Portrait_sensor // on iOS, falls back to a fixed Portrait
-
-> Landscape_left
-
-> Landscape_right
-
-> Landscape_sensor // on iOS, allows both landscape orientations
-
 ### Set screen brightness
 
 Set screen brightness for the currently running application (on Android) or system wide (on iOS).
@@ -363,15 +325,73 @@ Set a negative value to release the override and hand brightness control back to
 MobileUI.screenBrightness = -1
 ```
 
+### Lock screen orientation
+
+This will force the device screen orientation into one of the available values.  
+This cannot be used to read the actual device orientation.  
+
+Either call `setScreenLockOrientation(MobileUI.ScreenLockOrientation)` or set `screenLockedOrientation: MobileUI.ScreenLockOrientation` (in QML).
+
+```qml
+MobileUI.setScreenLockOrientation(MobileUI.Landscape_left)
+MobileUI.screenLockedOrientation = MobileUI.Landscape_right
+```
+
+Available orientations:
+
+> Unlocked
+
+> Portrait
+
+> Portrait_upsidedown
+
+> Portrait_sensor // on iOS, falls back to a fixed Portrait
+
+> Landscape_left
+
+> Landscape_right
+
+> Landscape_sensor // on iOS, allows both landscape orientations
+
+### Lock screensaver
+
+Either call `setScreenAlwaysOn(true/false)` or set `screenAlwaysOn: true/false` (in QML) to disable/re-enable the device screensaver.
+
+```qml
+MobileUI.setScreenAlwaysOn(true)
+MobileUI.screenAlwaysOn = true
+```
+
 ### Haptic feedback
 
-Produce a simple haptic feedback, called "notification feedback" on iOS or a "tick" on Android.
+Trigger a haptic feedback. Call `vibrate()` for a default (light) feedback, or pass a `MobileUI.HapticFeedback` value to pick a more specific feedback.
+
+```qml
+MobileUI.vibrate() // default light feedback
+MobileUI.vibrate(MobileUI.HapticHeavy)
+```
+
+Available feedbacks:
+
+> HapticSelection // a light tick
+
+> HapticLight // a light impact
+
+> HapticMedium // a medium impact
+
+> HapticHeavy // a heavy impact
+
+> HapticSuccess // a "task succeeded" notification
+
+> HapticWarning // a "warning" notification
+
+> HapticError // an "error / task failed" notification
+
+These map directly to the iOS feedback generators (selection / impact / notification). Android has no such vocabulary, so each style is mapped to the closest predefined `VibrationEffect` (or a short one-shot vibration on older devices).
 
 No model of iPad includes a haptic engine. Android tablets usually have one.
 
-```qml
-MobileUI.vibrate()
-```
+On Android, the `android.permission.VIBRATE` permission must be present in the manifest.
 
 ### Back to home screen
 

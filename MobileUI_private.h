@@ -55,14 +55,14 @@ public:
 
     int getKeyboardHeight();
 
-    void setScreenAlwaysOn(const bool on);
-
-    void setScreenOrientation(const MobileUI::ScreenOrientation orientation);
-
     int getScreenBrightness();
     void setScreenBrightness(const int value);
 
-    void vibrate();
+    void setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation);
+
+    void setScreenAlwaysOn(const bool on);
+
+    void triggerHapticFeedback(const MobileUI::HapticFeedback type);
 
     void backToHomeScreen();
 };

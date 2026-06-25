@@ -477,68 +477,6 @@ void MobileUI::refreshSafeAreas()
 
 /* ************************************************************************** */
 
-MobileUI::ScreenOrientation MobileUI::getScreenOrientation() const
-{
-    return m_screenOrientation;
-}
-
-void MobileUI::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
-{
-    const bool changed = (orientation != m_screenOrientation);
-
-    // we re-apply, the OS might have changed that on its own
-    m_screenOrientation = orientation;
-    d->setScreenOrientation(orientation);
-
-    // forcing the screen orientation does not emit QScreen::orientationChanged,
-    // so we refresh the safe areas ourselves
-    refreshMobileUI();
-
-    if (changed) Q_EMIT screenUpdated();
-}
-
-bool MobileUI::getScreenAlwaysOn() const
-{
-    return m_screenAlwaysOn;
-}
-
-void MobileUI::setScreenAlwaysOn(const bool value)
-{
-    const bool changed = (value != m_screenAlwaysOn);
-
-    // we re-apply, the OS might have changed that on its own
-    m_screenAlwaysOn = value;
-    d->setScreenAlwaysOn(value);
-
-    if (changed) Q_EMIT screenUpdated();
-}
-
-/* ************************************************************************** */
-
-int MobileUI::getScreenBrightness()
-{
-    return d->getScreenBrightness();
-}
-
-void MobileUI::setScreenBrightness(const int value)
-{
-    const bool changed = (value != m_screenBrightness);
-
-    // we re-apply, the OS might have changed that on its own
-    m_screenBrightness = value;
-    d->setScreenBrightness(value);
-
-    if (changed) Q_EMIT screenUpdated();
-}
-
-/* ************************************************************************** */
-
-void MobileUI::vibrate()
-{
-    d->vibrate();
-
-/* ************************************************************************** */
-
 void MobileUI::refreshKeyboardHeight()
 {
     // Important caveat:
@@ -561,6 +499,75 @@ void MobileUI::refreshKeyboardHeight()
         m_keyboardHeight = height;
         Q_EMIT keyboardUpdated();
     }
+}
+
+/* ************************************************************************** */
+
+int MobileUI::getScreenBrightness()
+{
+    return d->getScreenBrightness();
+}
+
+void MobileUI::setScreenBrightness(const int value)
+{
+    const bool changed = (value != m_screenBrightness);
+
+    // we re-apply, the OS might have changed that on its own
+    m_screenBrightness = value;
+    d->setScreenBrightness(value);
+
+    if (changed) Q_EMIT screenUpdated();
+}
+
+/* ************************************************************************** */
+
+MobileUI::ScreenLockOrientation MobileUI::getScreenLockOrientation() const
+{
+    return m_screenOrientation;
+}
+
+void MobileUI::setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation)
+{
+    const bool changed = (orientation != m_screenOrientation);
+
+    // we re-apply, the OS might have changed that on its own
+    m_screenOrientation = orientation;
+    d->setScreenLockOrientation(orientation);
+
+    // forcing the screen orientation does not emit QScreen::orientationChanged,
+    // so we refresh the safe areas ourselves
+    refreshMobileUI();
+
+    if (changed) Q_EMIT screenUpdated();
+}
+
+/* ************************************************************************** */
+
+bool MobileUI::getScreenAlwaysOn() const
+{
+    return m_screenAlwaysOn;
+}
+
+void MobileUI::setScreenAlwaysOn(const bool value)
+{
+    const bool changed = (value != m_screenAlwaysOn);
+
+    // we re-apply, the OS might have changed that on its own
+    m_screenAlwaysOn = value;
+    d->setScreenAlwaysOn(value);
+
+    if (changed) Q_EMIT screenUpdated();
+}
+
+/* ************************************************************************** */
+
+void MobileUI::hapticFeedback(const MobileUI::HapticFeedback type)
+{
+    d->triggerHapticFeedback(type);
+}
+void MobileUI::vibrate(const MobileUI::HapticFeedback type)
+{
+    d->triggerHapticFeedback(type);
 }
 
 /* ************************************************************************** */

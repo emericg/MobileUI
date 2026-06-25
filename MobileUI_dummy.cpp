@@ -56,14 +56,9 @@ void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight
     statusbarHeight = navbarHeight = top = left = right = bottom = 0;
 }
 
-void MobileUIPrivate::setScreenAlwaysOn(const bool on)
+int MobileUIPrivate::getKeyboardHeight()
 {
-    Q_UNUSED(on)
-}
-
-void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
-{
-    Q_UNUSED(orientation)
+    return -1;
 }
 
 int MobileUIPrivate::getScreenBrightness()
@@ -76,14 +71,19 @@ void MobileUIPrivate::setScreenBrightness(const int value)
     Q_UNUSED(value)
 }
 
-void MobileUIPrivate::vibrate()
+void MobileUIPrivate::setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation)
 {
-    return;
+    Q_UNUSED(orientation)
 }
 
-int MobileUIPrivate::getKeyboardHeight()
+void MobileUIPrivate::setScreenAlwaysOn(const bool on)
 {
-    return -1;
+    Q_UNUSED(on)
+}
+
+void MobileUIPrivate::triggerHapticFeedback(const MobileUI::HapticFeedback type)
+{
+    Q_UNUSED(type)
 }
 
 void MobileUIPrivate::backToHomeScreen()

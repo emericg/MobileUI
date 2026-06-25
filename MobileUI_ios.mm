@@ -150,26 +150,36 @@ void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight
     }
 }
 
+/* ************************************************************************** */
+
 int MobileUIPrivate::getKeyboardHeight()
 {
     return -1;
 }
 
-/* ************************************************************************** */
-
-void MobileUIPrivate::setScreenAlwaysOn(const bool on)
+int MobileUIPrivate::getScreenBrightness()
 {
-    if (on)
-    {
-        [[UIApplication sharedApplication] setIdleTimerDisabled: YES];
-    }
-    else
-    {
-        [[UIApplication sharedApplication] setIdleTimerDisabled: NO];
-    }
+    return static_cast<int>(std::lround([UIScreen mainScreen].brightness * 100.f));
 }
 
-void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation orientation)
+/* ************************************************************************** */
+
+void MobileUIPrivate::setScreenBrightness(const int value)
+{
+    // iOS brightness is system-wide with no per-app override to release,
+    // so a negative value is a no-op (there is nothing to hand back).
+    if (value < 0) return;
+
+    float brightness = value / 100.f; // brightness is 0.0 to 1.0
+    if (brightness < 0.0f) brightness = 0.0f;
+    if (brightness > 1.0f) brightness = 1.0f;
+
+    [UIScreen mainScreen].brightness = brightness;
+}
+
+/* ************************************************************************** */
+
+void MobileUIPrivate::setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation)
 {
     // For reference, the values from iOS:
     // UIInterfaceOrientationMaskAll,               // The view controller supports all interface orientations.
@@ -201,36 +211,57 @@ void MobileUIPrivate::setScreenOrientation(const MobileUI::ScreenOrientation ori
 
 /* ************************************************************************** */
 
-int MobileUIPrivate::getScreenBrightness()
+void MobileUIPrivate::setScreenAlwaysOn(const bool on)
 {
-    return static_cast<int>(std::lround([UIScreen mainScreen].brightness * 100.f));
-}
-
-void MobileUIPrivate::setScreenBrightness(const int value)
-{
-    // iOS brightness is system-wide with no per-app override to release,
-    // so a negative value is a no-op (there is nothing to hand back).
-    if (value < 0) return;
-
-    float brightness = value / 100.f; // brightness is 0.0 to 1.0
-    if (brightness < 0.0f) brightness = 0.0f;
-    if (brightness > 1.0f) brightness = 1.0f;
-
-    [UIScreen mainScreen].brightness = brightness;
+    if (on)
+    {
+        [[UIApplication sharedApplication] setIdleTimerDisabled: YES];
+    }
+    else
+    {
+        [[UIApplication sharedApplication] setIdleTimerDisabled: NO];
+    }
 }
 
 /* ************************************************************************** */
 
-void MobileUIPrivate::vibrate()
+void MobileUIPrivate::triggerHapticFeedback(const MobileUI::HapticFeedback type)
 {
-    // available impacts: light, medium, heavy, soft, rigid
-    // available notifications: error, success, warning
+    switch (type)
+    {
+        case MobileUI::HapticSelection:
+        {
+            UISelectionFeedbackGenerator *generator = [[UISelectionFeedbackGenerator alloc] init];
+            [generator selectionChanged];
+            generator = nil;
+        } break;
 
-    // "impact" feedback
-    UIImpactFeedbackGenerator *generator = [[UIImpactFeedbackGenerator alloc] initWithStyle:(UIImpactFeedbackStyleMedium)];
-    //[generator prepare];
-    [generator impactOccurred];
-    generator = nil;
+        case MobileUI::HapticLight:
+        case MobileUI::HapticMedium:
+        case MobileUI::HapticHeavy:
+        {
+            UIImpactFeedbackStyle style = UIImpactFeedbackStyleMedium;
+            if (type == MobileUI::HapticLight) style = UIImpactFeedbackStyleLight;
+            else if (type == MobileUI::HapticHeavy) style = UIImpactFeedbackStyleHeavy;
+
+            UIImpactFeedbackGenerator *generator = [[UIImpactFeedbackGenerator alloc] initWithStyle:style];
+            [generator impactOccurred];
+            generator = nil;
+        } break;
+
+        case MobileUI::HapticSuccess:
+        case MobileUI::HapticWarning:
+        case MobileUI::HapticError:
+        {
+            UINotificationFeedbackType notif = UINotificationFeedbackTypeSuccess;
+            if (type == MobileUI::HapticWarning) notif = UINotificationFeedbackTypeWarning;
+            else if (type == MobileUI::HapticError) notif = UINotificationFeedbackTypeError;
+
+            UINotificationFeedbackGenerator *generator = [[UINotificationFeedbackGenerator alloc] init];
+            [generator notificationOccurred:notif];
+            generator = nil;
+        } break;
+    }
 }
 
 /* ************************************************************************** */

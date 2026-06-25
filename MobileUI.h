@@ -41,17 +41,20 @@ class MobileUIPrivate;
 /*!
  * \brief Mobile platform UI integration singleton.
  *
- * MobileUI lets a QML (or C++) application interact with mobile specific features
- * that have no equivalent in the standard Qt API:
+ * MobileUI lets a QML (or C++) application interact with mobile specific
+ * features that have no equivalent in the standard Qt APIs:
  * - Android status bar and navigation bar colors and themes.
  * - iOS status bar theme (iOS has no status bar color, and no navigation bar).
  * - The device OS theme (light or dark mode).
  * - The screen safe areas (notches, cutouts, system bars, rounded corners).
- * - Screensaver inhibition, forced screen orientation and screen brightness.
+ * - The on-screen keyboard height.
+ * - Force screen orientation.
+ * - Force screen brightness.
+ * - Screensaver inhibition.
  * - Haptic feedbacks.
  * - Android "back to home screen" helper.
  *
- * It is exposed to QML as a singleton and the very same instance is shared with C++
+ * It is exposed to QML as a singleton, and the same instance is shared with C++
  * through getInstance(), so settings applied from either side stay consistent.
  *
  * You can use it without worries on desktop platforms, a dummy backend is used so
@@ -87,9 +90,9 @@ class MobileUI : public QObject
     Q_PROPERTY(int safeAreaRight READ getSafeAreaRight NOTIFY safeAreaUpdated)
     Q_PROPERTY(int safeAreaBottom READ getSafeAreaBottom NOTIFY safeAreaUpdated)
 
-    Q_PROPERTY(bool screenAlwaysOn READ getScreenAlwaysOn WRITE setScreenAlwaysOn NOTIFY screenUpdated)
-    Q_PROPERTY(ScreenOrientation screenOrientation READ getScreenOrientation WRITE setScreenOrientation NOTIFY screenUpdated)
+    Q_PROPERTY(ScreenLockOrientation screenLockedOrientation READ getScreenLockOrientation WRITE setScreenLockOrientation NOTIFY screenUpdated)
     Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenUpdated)
+    Q_PROPERTY(bool screenAlwaysOn READ getScreenAlwaysOn WRITE setScreenAlwaysOn NOTIFY screenUpdated)
 
 Q_SIGNALS:
     void devicethemeUpdated();  //!< Emitted when the device OS theme (light/dark mode) changes.
@@ -125,26 +128,6 @@ public:
         Dark  =  1  //!< Dark application theme, usually dark background and light texts.
     };
     Q_ENUM(Theme)
-
-    /*!
-     * \brief Screen orientations that can be forced through setScreenOrientation().
-     *
-     * The values are bit flags, so a sensor mode is conceptually the union of
-     * its two fixed orientations. These are used to *lock* the orientation;
-     * they cannot be used to read the device's current physical orientation.
-     */
-    enum ScreenOrientation {
-        Unlocked = 0,                       //!< Orientation is unlocked; the OS decides freely.
-
-        Portrait            = (1 << 0),     //!< Locked to portrait, right side up.
-        Portrait_upsidedown = (1 << 1),     //!< Locked to portrait, upside down.
-        Portrait_sensor     = (1 << 2),     //!< Both portrait orientations, sensor driven (Android only; falls back to Portrait on iOS).
-
-        Landscape_left      = (1 << 3),     //!< Locked to landscape left.
-        Landscape_right     = (1 << 4),     //!< Locked to landscape right.
-        Landscape_sensor    = (1 << 5),     //!< Both landscape orientations, sensor driven (Android only; falls back to Landscape on iOS).
-    };
-    Q_ENUM(ScreenOrientation)
 
     // MobileUI ////////////////////////////////////////////////////////////////
 
@@ -342,9 +325,9 @@ public:
      * \brief Get the navigation bar height.
      * \return the navigation bar height in pixels, or 0 when it is not visible (full screen mode).
      *
-     * The navigation bar is usually at the bottom of the screen. When the
-     * device is rotated and the bar moves to the left/right edge, this returns
-     * 0 and the bar size is instead accounted for in the left/right safe areas.
+     * The navigation bar is usually at the bottom of the screen. When the device
+     * is rotated and the bar moves to the left/right edge, this returns 0 and
+     * the bar size is instead accounted for in the left/right safe areas.
      */
     int getNavbarHeight() const { return m_navbarHeight; }
 
@@ -388,14 +371,34 @@ public:
     // Screen helpers //////////////////////////////////////////////////////////
 
     /*!
-     * \brief Get orientation lock (if set).
-     * \return See MobileUI::ScreenOrientation enum.
+     * \brief Screen orientations that can be locked through setScreenLockOrientation().
+     *
+     * The values are bit flags, so a sensor mode is conceptually the union of
+     * its two fixed orientations. These are used to *lock* the orientation;
+     * they cannot be used to read the device's current physical orientation.
      */
-    MobileUI::ScreenOrientation getScreenOrientation() const;
+    enum ScreenLockOrientation {
+        Unlocked = 0,                       //!< Orientation is unlocked; the OS decides freely.
+
+        Portrait            = (1 << 0),     //!< Locked to portrait, right side up.
+        Portrait_upsidedown = (1 << 1),     //!< Locked to portrait, upside down.
+        Portrait_sensor     = (1 << 2),     //!< Both portrait orientations, sensor driven (Android only; falls back to Portrait on iOS).
+
+        Landscape_left      = (1 << 3),     //!< Locked to landscape left.
+        Landscape_right     = (1 << 4),     //!< Locked to landscape right.
+        Landscape_sensor    = (1 << 5),     //!< Both landscape orientations, sensor driven (Android only; falls back to Landscape on iOS).
+    };
+    Q_ENUM(ScreenLockOrientation)
+
+    /*!
+     * \brief Get orientation lock (if set).
+     * \return See MobileUI::ScreenLockOrientation enum.
+     */
+    MobileUI::ScreenLockOrientation getScreenLockOrientation() const;
 
     /*!
      * \brief Lock (or unlock) the screen orientation.
-     * \param orientation: see MobileUI::ScreenOrientation enum.
+     * \param orientation: see MobileUI::ScreenLockOrientation enum.
      * \note - On iOS the sensor modes are approximated: Landscape_sensor allows both landscape orientations,
      *         while Portrait_sensor falls back to a fixed Portrait.
      *       - Forcing orientation is also not allowed on iPads.
@@ -404,19 +407,7 @@ public:
      * - https://developer.android.com/guide/topics/manifest/activity-element.html#screen
      * - https://developer.apple.com/documentation/bundleresources/information_property_list/uisupportedinterfaceorientations
      */
-    Q_INVOKABLE void setScreenOrientation(const MobileUI::ScreenOrientation orientation);
-
-    /*!
-     * \brief Get screensaver lock (if set).
-     * \return on or off.
-     */
-    bool getScreenAlwaysOn() const;
-
-    /*!
-     * \brief Lock screensaver.
-     * \param value: on or off.
-     */
-    Q_INVOKABLE void setScreenAlwaysOn(const bool value);
+    Q_INVOKABLE void setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation);
 
     /*!
      * \brief Get screen brightness set for the current app (on Android) or system wide (on iOS).
@@ -436,14 +427,46 @@ public:
      */
     Q_INVOKABLE void setScreenBrightness(const int value);
 
-    // Other helpers ///////////////////////////////////////////////////////////
+    /*!
+     * \brief Get screensaver lock (if set).
+     * \return on or off.
+     */
+    bool getScreenAlwaysOn() const;
+
+    /*!
+     * \brief Lock screensaver.
+     * \param value: on or off.
+     */
+    Q_INVOKABLE void setScreenAlwaysOn(const bool value);
+
+    // Haptic feedbacks ////////////////////////////////////////////////////////
+
+    /*!
+     * \brief Haptic feedback styles that can be triggered through vibrate().
+     *
+     * These mirror the iOS feedback generators (impact / notification / selection).
+     * Android has no equivalent vocabulary, so each style is mapped to the closest
+     * predefined VibrationEffect (or a short one-shot vibration on older devices).
+     */
+    enum HapticFeedback {
+        HapticSelection = 0,    //!< A light tick, for a selection moving between values.
+        HapticLight,            //!< A light impact (small UI element).
+        HapticMedium,           //!< A medium impact.
+        HapticHeavy,            //!< A heavy impact (large UI element).
+        HapticSuccess,          //!< A "task succeeded" notification feedback.
+        HapticWarning,          //!< A "warning" notification feedback.
+        HapticError,            //!< An "error / task failed" notification feedback.
+    };
+    Q_ENUM(HapticFeedback)
 
     /*!
      * \brief Trigger an haptic feedback.
+     * \param type: see MobileUI::HapticFeedback enum. Default is a "light" haptic feedback.
      * \note iPads don't support haptic feedbacks.
      * \note On Android the "android.permission.VIBRATE" must be added to the manifest.
      */
-    Q_INVOKABLE void vibrate();
+    Q_INVOKABLE void hapticFeedback(const MobileUI::HapticFeedback type = MobileUI::HapticLight);
+    Q_INVOKABLE void vibrate(const MobileUI::HapticFeedback type = MobileUI::HapticLight);
 
     // Keyboard ////////////////////////////////////////////////////////////////
 
@@ -525,9 +548,9 @@ private:
     int m_safeAreaBottom = 0;
 
     // Screen states
+    MobileUI::ScreenLockOrientation m_screenOrientation = MobileUI::Unlocked;
     int m_screenBrightness = -1;
     bool m_screenAlwaysOn = false;
-    MobileUI::ScreenOrientation m_screenOrientation = MobileUI::Unlocked;
 
     // On-screen keyboard height (in pixels)
     int m_keyboardHeight = 0;
