@@ -218,9 +218,12 @@ This is a QColor, so you can use a hexadecimal value `"#fff"` or even a named co
 
 By default the theme is `Auto`, so setting a color also updates the derived theme (evaluated from whether the bar color is perceived as light or dark). Set an explicit theme to override that behavior.
 
+> [!IMPORTANT]
+> The status bar color is only honored up to **Android 14 (API 34)**. On **Android 15+ (API 35+)** the platform `setStatusBarColor()` is deprecated and turned into a no-op: edge-to-edge is mandatory, the bar stays transparent, and setting `statusbarColor` has no effect. Paint your own background / content behind the (now transparent) bar instead — see the "edge to edge" window mode. The icon contrast (`statusbarTheme`) keeps working on every supported version.
+
 > statusbarContentColor
 
-The reference color used to derive the theme while `statusbarTheme` is `Auto` and the statusbarColor is `"transparent"` (or not drawn).
+The "reference color" used to derive the theme while `statusbarTheme` is `Auto` and the statusbarColor is `"transparent"` (or not drawn).
 
 This is meant to be used in edge-to-edge mode: you can choose to use a fully transparent status bar, and paint your own content freely behind that bar, but you want the text/icon contrast to still follow that content color.
 
@@ -230,7 +233,11 @@ When unset, derivation falls back to `statusbarColor`, and if that isn't set eit
 
 Set the status bar theme: `MobileUI.Auto` (the default), `MobileUI.Light` or `MobileUI.Dark`.
 
+This drives the status bar foreground contrast — the clock, status icons and text. `Light` means a light bar background, so the system draws dark icons; `Dark` means a dark background, so it draws light icons.
+
 `Auto` derives the theme from the bar's reference color — `statusbarContentColor` if used, otherwise the default `statusbarColor` — and leaves the theme to the OS when no usable color is available. `Light` / `Dark` force it explicitly.
+
+Unlike `statusbarColor` (Android only, and capped at API 34), the theme keeps working everywhere — on iOS, and on Android including **Android 15+ (API 35+)** in edge-to-edge mode. On Android it goes through `WindowInsetsController.setSystemBarsAppearance()` on API 30+, and the legacy `SYSTEM_UI_FLAG_LIGHT_STATUS_BAR` system-UI flag on API 28–29.
 
 On iOS and Android API 28+, the theme must be set each time the window visibility or orientation changes. This is handled automatically by MobileUI.
 
@@ -249,21 +256,30 @@ Set the navigation bar color (if available).
 
 This is a QColor, so you can use a hexadecimal value `"#fff"` or even a named color `"red"`. And you can use `"transparent"` too.
 
+The color is barely visible under **gesture navigation**: the system keeps the gesture pill area transparent regardless of the requested color, so `navbarColor` mostly matters for the classic **3-button / 2-button navigation**.
+
 By default the theme is `Auto`, so setting a color also updates the derived theme. Set an explicit theme to override that behavior.
+
+> [!IMPORTANT]
+> The navigation bar color is only honored up to **Android 14 (API 34)**. On **Android 15+ (API 35+)** the platform `setNavigationBarColor()` is deprecated and turned into a no-op: edge-to-edge is mandatory, the bar stays transparent, and setting `navbarColor` has no effect. Paint your own background / content behind the (transparent) bar instead — see the "edge to edge" window mode. The icon contrast (`navbarTheme`) keeps working on every supported version.
 
 > navbarContentColor
 
-The reference color used to derive the theme while `navbarTheme` is `Auto`.
+The "reference color" used to derive the theme while `navbarTheme` is `Auto`.
 
 This is meant to be used in edge-to-edge mode: you can choose to use a fully transparent navigation bar, and paint your own content freely behind that bar, but you want the text/icon contrast to still follow that content color.
 
-When unset, derivation falls back to `statusbarColor`, and if that isn't set either, the OS will take back control of the theme.
+When unset, derivation falls back to `navbarColor`, and if that isn't set either, the OS will take back control of the theme.
 
 > navbarTheme
 
 Set the navigation bar theme: `MobileUI.Auto` (the default), `MobileUI.Light` or `MobileUI.Dark`.
 
+This drives the navigation bar foreground contrast — the 3-button icon color, or the gesture handle tint. `Light` means a light bar background, so the system draws dark icons; `Dark` means a dark background, so it draws light icons.
+
 `Auto` derives the theme from the bar's reference color — `navbarContentColor` if used, otherwise the default `navbarColor` — and leaves the theme to the OS when no usable color is available. `Light` / `Dark` force it explicitly.
+
+Unlike `navbarColor`, the theme keeps working on every supported Android version, including **Android 15+ (API 35+)** in edge-to-edge mode. It goes through `WindowInsetsController.setSystemBarsAppearance()` on API 30+, and the legacy `SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR` system-UI flag on API 28–29.
 
 On Android API 28+, the theme must be set each time the window visibility or orientation changes. This is handled automatically by MobileUI.
 

@@ -34,7 +34,7 @@
 /* ************************************************************************** */
 
 /*!
- * \brief Declarative helper element forwarding writable settings to the MobileUI singleton.
+ * \brief Instantiable QML helper element forwarding writable settings to the MobileUI singleton.
  *
  * MobileUI is a QML singleton, so its settings are normally applied imperatively
  * (MobileUI.statusbarColor = ...) or through Binding elements. This element lets
