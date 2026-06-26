@@ -163,9 +163,8 @@ static int insetField(const QJniObject &insets, const char *insetType, const cha
     //if (QNativeInterface::QAndroidApplication::sdkVersion() < 30) return 0;
     if (!insets.isValid()) return 0;
 
-    // Modern system bar height, via WindowInsets.Type
+    // Modern system bar height, via WindowInsets.Type // Call from Android thread!
     // WindowInsets.Type // Added in API level 30
-    // Call from Android thread!
 
     jint type = QJniObject::callStaticMethod<jint>("android/view/WindowInsets$Type", insetType, "()I");
     QJniObject inset = insets.callObjectMethod("getInsets", "(I)Landroid/graphics/Insets;", type);
@@ -179,8 +178,7 @@ static int dimenHeight(const char *name, int fallbackValue)
 {
     //if (QNativeInterface::QAndroidApplication::sdkVersion() < 28) return fallbackValue;
 
-    // Legacy system bar height fallback, via the platform dimension resource
-    // Call from Android thread!
+    // Legacy system bar height fallback, via the platform dimension resource // Call from Android thread!
 
     QJniObject activity = QNativeInterface::QAndroidApplication::context();
     QJniObject resources = activity.callObjectMethod("getResources", "()Landroid/content/res/Resources;");
@@ -279,26 +277,26 @@ void MobileUIPrivate::setColor_navbar(const QColor &color)
 
             QJniObject window_android = getAndroidWindow();
             QWindow *window_qt = qApp->allWindows().isEmpty() ? nullptr : qApp->allWindows().first();
+            const bool fullscreenMode = (window_qt && window_qt->visibility() == QWindow::FullScreen);
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
-            const bool maximizedHint = (window_qt && (window_qt->flags() & Qt::ExpandedClientAreaHint));
-#else
-            const bool maximizedHint = (window_qt && (window_qt->flags() & Qt::MaximizeUsingFullscreenGeometryHint));
-#endif
+            // Way more complicated than setColor_statusbar()...
 
-            if (maximizedHint)
+            if (QNativeInterface::QAndroidApplication::sdkVersion() >= 29)
             {
-                // if we try to set the FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag while in fullscreen mode, it will mess everything up
-                window_android.callMethod<void>("addFlags", "(I)V", FLAG_TRANSLUCENT_NAVIGATION);
-                window_android.callMethod<void>("setNavigationBarColor", "(I)V", color.rgba());
+                // Unlike the status bar, navigation-bar contrast enforcement defaults to ON
+                window_android.callMethod<void>("setNavigationBarContrastEnforced", "(Z)V", false);
+            }
+            if (fullscreenMode)
+            {
+                // When the navbar is hidden, don't force the system bar backgrounds, it disturbs the fullscreen layout
+                window_android.callMethod<void>("clearFlags", "(I)V", FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             }
             else
             {
-                // set color
                 window_android.callMethod<void>("addFlags", "(I)V", FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-                window_android.callMethod<void>("clearFlags", "(I)V", FLAG_TRANSLUCENT_NAVIGATION);
-                window_android.callMethod<void>("setNavigationBarColor", "(I)V", color.rgba());
             }
+            window_android.callMethod<void>("clearFlags", "(I)V", FLAG_TRANSLUCENT_NAVIGATION);
+            window_android.callMethod<void>("setNavigationBarColor", "(I)V", color.rgba());
         }
     });
 }
