@@ -233,7 +233,7 @@ public:
     //! Get the current status bar theme we set manually.
     MobileUI::Theme getStatusbarTheme() const;
 
-    //! Get the current status bar theme we set, manually or automatically, otherwise Auto.
+    //! Get the current status bar theme, set manually or derived automatically.
     MobileUI::Theme getStatusbarThemeSet() const;
 
     /*!
@@ -294,7 +294,7 @@ public:
     //! Get the current navigation bar theme we set manually.
     MobileUI::Theme getNavbarTheme() const;
 
-    //! Get the current navigation bar theme we set, manually or automatically, otherwise Auto.
+    //! Get the current navigation bar theme, set manually or derived automatically.
     MobileUI::Theme getNavbarThemeSet() const;
 
     /*!

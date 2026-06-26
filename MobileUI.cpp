@@ -196,7 +196,7 @@ void MobileUI::setStatusbarColor(const QColor &color)
 
     const bool changed = (m_statusbarColor != color);
 
-    // we re-apply anyway, and battle with the OS fighting us...
+    // Re-apply anyway, and battle with the OS fighting us...
     m_statusbarColor = color;
     d->setColor_statusbar(color);
 
@@ -243,14 +243,14 @@ void MobileUI::setStatusbarTheme(const MobileUI::Theme theme)
     {
         m_statusbarTheme = m_statusbarThemeSet = theme;
 
-        // set & apply the new theme
+        // Set & apply the new theme
         d->setTheme_statusbar(m_statusbarTheme);
     }
     else // if (theme == MobileUI::Auto)
     {
         m_statusbarTheme = m_statusbarThemeSet = MobileUI::Auto;
 
-        // derive & apply a new theme from the reference color, if possible
+        // Derive & apply a new theme from the reference color, if possible
         setStatusbarTheme_fromColor_refresh();
     }
 
@@ -296,10 +296,15 @@ void MobileUI::setStatusbarTheme_fromColor_refresh()
     {
         setStatusbarTheme_fromColor(m_statusbarColor);
     }
-    else if (m_statusbarThemeSet > MobileUI::Auto)
+    else
     {
-        m_statusbarThemeSet = MobileUI::Auto;
-        Q_EMIT statusbarUpdated();
+        // No usable reference color (transparent bar, no content color): fall back to a deterministic default
+        if (m_osTheme != m_statusbarThemeSet)
+        {
+            m_statusbarThemeSet = m_osTheme;
+            d->setTheme_statusbar(m_statusbarThemeSet);
+            Q_EMIT statusbarUpdated();
+        }
     }
 }
 
@@ -317,7 +322,7 @@ void MobileUI::setNavbarColor(const QColor &color)
 
     const bool changed = (m_navbarColor != color);
 
-    // we re-apply anyway, and battle with the OS fighting us...
+    // We re-apply anyway, and battle with the OS fighting us...
     m_navbarColor = color;
     d->setColor_navbar(color);
 
@@ -364,14 +369,14 @@ void MobileUI::setNavbarTheme(const MobileUI::Theme theme)
     {
         m_navbarTheme = m_navbarThemeSet = theme;
 
-        // set & apply the new theme
+        // Set & apply the new theme
         d->setTheme_navbar(m_navbarTheme);
     }
     else // if (theme == MobileUI::Auto)
     {
         m_navbarTheme = m_navbarThemeSet = MobileUI::Auto;
 
-        // derive & apply a new theme from the reference color, if possible
+        // Derive & apply a new theme from the reference color, if possible
         setNavbarTheme_fromColor_refresh();
     }
 
@@ -417,10 +422,15 @@ void MobileUI::setNavbarTheme_fromColor_refresh()
     {
         setNavbarTheme_fromColor(m_navbarColor);
     }
-    else if (m_navbarThemeSet > MobileUI::Auto)
+    else
     {
-        m_navbarThemeSet = MobileUI::Auto;
-        Q_EMIT navbarUpdated();
+        // no usable reference color (transparent bar, no content color): fall back to a deterministic default
+        if (m_osTheme != m_navbarThemeSet)
+        {
+            m_navbarThemeSet = m_osTheme;
+            d->setTheme_navbar(m_navbarThemeSet);
+            Q_EMIT navbarUpdated();
+        }
     }
 }
 
@@ -514,7 +524,7 @@ void MobileUI::setScreenBrightness(const int value)
 {
     const bool changed = (value != m_screenBrightness);
 
-    // we re-apply, the OS might have changed that on its own
+    // We re-apply, the OS might have changed that on its own
     m_screenBrightness = value;
     d->setScreenBrightness(value);
 
@@ -532,11 +542,11 @@ void MobileUI::setScreenLockOrientation(const MobileUI::ScreenLockOrientation or
 {
     const bool changed = (orientation != m_screenOrientation);
 
-    // we re-apply, the OS might have changed that on its own
+    // We re-apply, the OS might have changed that on its own
     m_screenOrientation = orientation;
     d->setScreenLockOrientation(orientation);
 
-    // forcing the screen orientation does not emit QScreen::orientationChanged,
+    // Forcing the screen orientation does not emit QScreen::orientationChanged,
     // so we refresh the safe areas ourselves
     refreshMobileUI();
 
@@ -554,7 +564,7 @@ void MobileUI::setScreenAlwaysOn(const bool value)
 {
     const bool changed = (value != m_screenAlwaysOn);
 
-    // we re-apply, the OS might have changed that on its own
+    // We re-apply, the OS might have changed that on its own
     m_screenAlwaysOn = value;
     d->setScreenAlwaysOn(value);
 

@@ -248,7 +248,7 @@ On iOS and Android API 28+, the theme must be set each time the window visibilit
 
 > statusbarThemeSet
 
-Read-only: the theme actually applied right now (`MobileUI.Light`, `MobileUI.Dark`, or `MobileUI.Auto` when nothing is applied).
+Read-only: the theme actually applied right now (`MobileUI.Light` or `MobileUI.Dark`). In `Auto` mode with no usable bar color, it falls back to the device OS theme as a deterministic default.
 
 > navbarColor
 
@@ -285,7 +285,7 @@ On Android API 28+, the theme must be set each time the window visibility or ori
 
 > navbarThemeSet
 
-Read-only: the theme actually applied right now (`MobileUI.Light`, `MobileUI.Dark`, or `MobileUI.Auto` when nothing is applied).
+Read-only: the theme actually applied right now (`MobileUI.Light` or `MobileUI.Dark`). In `Auto` mode with no usable bar color, it falls back to the device OS theme as a deterministic default.
 
 ### Device theme
 
