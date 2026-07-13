@@ -537,12 +537,12 @@ get a light grey depending on your device. It's bad if you're coming from a whit
 - All in all, window modes, geometry, rotation and many smaller things are just buggy on Qt for Android, and often subtly broken depending on which Qt version is used. Using only Qt 6.8 and up helps a lot...
 
 
-## Licensing
+## License
 
 This project is based on [qtstatusbar](https://github.com/jpnurmi/qtstatusbar) by jpnurmi.
 
-This project is licensed under the [MIT license](LICENSE).
+This project is licensed under the [MIT license](LICENSE.md).
 
 > Copyright (c) 2016 J-P Nurmi (jpnurmi)
 
-> Copyright (c) 2026 Emeric Grange (emeric.grange@gmail.com)
+> Copyright (c) 2026 Emeric Grange <emeric.grange@gmail.com>
