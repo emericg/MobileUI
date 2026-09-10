@@ -160,7 +160,7 @@ static int pxToDip(int px)
 
 static int insetField(const QJniObject &insets, const char *insetType, const char *side)
 {
-    //if (QNativeInterface::QAndroidApplication::sdkVersion() < 30) return 0;
+    if (QNativeInterface::QAndroidApplication::sdkVersion() < 30) return 0;
     if (!insets.isValid()) return 0;
 
     // Modern system bar height, via WindowInsets.Type // Call from Android thread!
@@ -200,7 +200,7 @@ static int dimenHeight(const char *name, int fallbackValue)
 
 /* ************************************************************************** */
 
-int MobileUIPrivate::getDeviceTheme()
+int MobileUIPrivate::getDeviceTheme() const
 {
     return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([] {
             QJniObject activity = QNativeInterface::QAndroidApplication::context();
@@ -249,7 +249,7 @@ void MobileUIPrivate::setTheme_statusbar(const MobileUI::Theme theme)
                                        appearance, APPEARANCE_LIGHT_STATUS_BARS);
             }
         }
-        else if (QNativeInterface::QAndroidApplication::sdkVersion() < 30)
+        else // if (QNativeInterface::QAndroidApplication::sdkVersion() >= 23)
         {
             // setSystemUiVisibility // Added in API level 23 // Deprecated in API level 30
 
@@ -317,7 +317,7 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
                                        appearance, APPEARANCE_LIGHT_NAVIGATION_BARS);
             }
         }
-        else if (QNativeInterface::QAndroidApplication::sdkVersion() < 30)
+        else // if (QNativeInterface::QAndroidApplication::sdkVersion() >= 23)
         {
             // getSystemUiVisibility // Added in API level 23 // Deprecated in API level 30
 
@@ -337,7 +337,7 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 /* ************************************************************************** */
 
 void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight,
-                                         int &top, int &left, int &right, int &bottom)
+                                         int &top, int &left, int &right, int &bottom) const
 {
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([&]() -> void {
         QJniObject insets = getAndroidRootWindowInsets(); // called just once
@@ -389,7 +389,7 @@ void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight
 
 /* ************************************************************************** */
 
-int MobileUIPrivate::getKeyboardHeight()
+int MobileUIPrivate::getKeyboardHeight() const
 {
     return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() -> int {
             // WindowInsets.Type.ime() // Added in API level 30
@@ -406,7 +406,7 @@ int MobileUIPrivate::getKeyboardHeight()
 
 /* ************************************************************************** */
 
-int MobileUIPrivate::getScreenBrightness()
+int MobileUIPrivate::getScreenBrightness() const
 {
     return QNativeInterface::QAndroidApplication::runOnAndroidMainThread([] {
             // If a brightness override has been set for the current app window, use it.

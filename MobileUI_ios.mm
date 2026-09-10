@@ -71,7 +71,7 @@ static UIWindow *activeKeyWindow()
 
 /* ************************************************************************** */
 
-UIStatusBarStyle statusBarStyle(const MobileUI::Theme theme)
+static UIStatusBarStyle statusBarStyle(const MobileUI::Theme theme)
 {
     if (theme == MobileUI::Dark) return UIStatusBarStyleLightContent;
     return UIStatusBarStyleDarkContent;
@@ -86,7 +86,7 @@ static void setPreferredStatusBarStyle(UIWindow *window, UIStatusBarStyle style)
     [viewController setNeedsStatusBarAppearanceUpdate];
 }
 
-void updatePreferredStatusBarStyle(const MobileUI::Theme theme)
+static void updatePreferredStatusBarStyle(const MobileUI::Theme theme)
 {
     UIStatusBarStyle style = statusBarStyle(theme);
     UIWindow *keyWindow = activeKeyWindow();
@@ -95,7 +95,7 @@ void updatePreferredStatusBarStyle(const MobileUI::Theme theme)
 
 /* ************************************************************************** */
 
-int MobileUIPrivate::getDeviceTheme()
+int MobileUIPrivate::getDeviceTheme() const
 {
     UIWindow *keyWindow = activeKeyWindow();
     if (keyWindow.rootViewController.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
@@ -133,7 +133,7 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 /* ************************************************************************** */
 
 void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight,
-                                         int &top, int &left, int &right, int &bottom)
+                                         int &top, int &left, int &right, int &bottom) const
 {
     statusbarHeight = navbarHeight = 0;
 
@@ -159,12 +159,12 @@ void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight
 
 /* ************************************************************************** */
 
-int MobileUIPrivate::getKeyboardHeight()
+int MobileUIPrivate::getKeyboardHeight() const
 {
     return -1;
 }
 
-int MobileUIPrivate::getScreenBrightness()
+int MobileUIPrivate::getScreenBrightness() const
 {
     return static_cast<int>(std::lround([UIScreen mainScreen].brightness * 100.f));
 }

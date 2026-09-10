@@ -163,7 +163,7 @@ void MobileUI::refreshDeviceTheme()
     if (theme != m_osTheme)
     {
         m_osTheme = theme;
-        Q_EMIT devicethemeUpdated();
+        Q_EMIT deviceThemeUpdated();
     }
 }
 
@@ -274,7 +274,7 @@ void MobileUI::setStatusbarTheme_fromColor(const QColor &color)
 {
     if (m_statusbarTheme != MobileUI::Auto) return;
 
-   MobileUI::Theme theme = deriveStatusbarTheme(color);
+    const MobileUI::Theme theme = deriveStatusbarTheme(color);
 
     if (theme > MobileUI::Auto && theme != m_statusbarThemeSet)
     {

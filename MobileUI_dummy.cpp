@@ -25,7 +25,7 @@
 
 /* ************************************************************************** */
 
-int MobileUIPrivate::getDeviceTheme()
+int MobileUIPrivate::getDeviceTheme() const
 {
     return MobileUI::Theme::Light;
 }
@@ -51,17 +51,17 @@ void MobileUIPrivate::setTheme_navbar(const MobileUI::Theme theme)
 }
 
 void MobileUIPrivate::getSafeAreaMetrics(int &statusbarHeight, int &navbarHeight,
-                                         int &top, int &left, int &right, int &bottom)
+                                         int &top, int &left, int &right, int &bottom) const
 {
     statusbarHeight = navbarHeight = top = left = right = bottom = 0;
 }
 
-int MobileUIPrivate::getKeyboardHeight()
+int MobileUIPrivate::getKeyboardHeight() const
 {
     return -1;
 }
 
-int MobileUIPrivate::getScreenBrightness()
+int MobileUIPrivate::getScreenBrightness() const
 {
     return -1;
 }

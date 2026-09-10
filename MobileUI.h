@@ -72,7 +72,7 @@ class MobileUI : public QObject
     Q_PROPERTY(bool isPhone READ isDevicePhone CONSTANT)
     Q_PROPERTY(bool isTablet READ isDeviceTablet CONSTANT)
 
-    Q_PROPERTY(Theme deviceTheme READ getDeviceTheme NOTIFY devicethemeUpdated)
+    Q_PROPERTY(Theme deviceTheme READ getDeviceTheme NOTIFY deviceThemeUpdated)
 
     Q_PROPERTY(QColor statusbarColor READ getStatusbarColor WRITE setStatusbarColor NOTIFY statusbarUpdated)
     Q_PROPERTY(QColor statusbarContentColor READ getStatusbarContentColor WRITE setStatusbarContentColor NOTIFY statusbarUpdated)
@@ -102,7 +102,7 @@ class MobileUI : public QObject
     Q_PROPERTY(bool torchEnabled READ getTorchEnabled WRITE setTorchEnabled NOTIFY torchUpdated)
 
 Q_SIGNALS:
-    void devicethemeUpdated();  //!< Emitted when the device OS theme (light/dark mode) changes.
+    void deviceThemeUpdated();  //!< Emitted when the device OS theme (light/dark mode) changes.
     void statusbarUpdated();    //!< Emitted when a status bar color or theme is set.
     void navbarUpdated();       //!< Emitted when a navigation bar color or theme is set.
     void keyboardUpdated();     //!< Emitted when the on-screen keyboard height changes (shown, hidden or resized).
@@ -133,7 +133,7 @@ public:
     enum Theme {
         Auto  = -1, //!< Derive the bar theme from its reference color, or leave it to the OS if none is set.
         Light =  0, //!< Light application theme, usually light background and dark texts.
-        Dark  =  1  //!< Dark application theme, usually dark background and light texts.
+        Dark  =  1, //!< Dark application theme, usually dark background and light texts.
     };
     Q_ENUM(Theme)
 
@@ -560,17 +560,17 @@ public:
      * \param color: the color to evaluate.
      * \return the perceived luminance (Rec. 601), normalized to the [0.0 ; 1.0] range.
      */
-    static double colorLuminance(const QColor &color);
+    Q_INVOKABLE static double colorLuminance(const QColor &color);
 
     /*!
      * \brief Tell whether a color is perceived as "light" using the Android cutoff.
      * \param color: the color to evaluate.
      * \return true if the color is light enough to warrant dark foreground icons.
      *
-     * Uses the luminance cutoff (~0.66) that matches Android's own behavior;
+     * Uses the luminance cutoff (0.8) that matches Android's own behavior;
      * this is the rule MobileUI uses internally to auto-derive a bar theme.
      */
-    static bool isColorLight_android(const QColor &color);
+    Q_INVOKABLE static bool isColorLight_android(const QColor &color);
 
     /*!
      * \brief Tell whether a color is perceived as "light" using the HyperOS cutoff.
@@ -581,7 +581,7 @@ public:
      * bar background's perceived brightness, around a ~0.5 luminance cutoff.
      * Use this to predict which foreground those ROMs will pick.
      */
-    static bool isColorLight_hyperos(const QColor &color);
+    Q_INVOKABLE static bool isColorLight_hyperos(const QColor &color);
 
 private:
     // Device types
