@@ -62,6 +62,8 @@ class MobileUIPrivate;
  *
  * You can use it without worries on desktop platforms, a dummy backend is used so
  * no code is runned, setters are ignored, getters return neutral/default values...
+ *
+ * \note Thread affinity: MobileUI must be used from the GUI (main) thread ONLY.
  */
 class MobileUI : public QObject
 {
@@ -97,7 +99,7 @@ class MobileUI : public QObject
     Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenUpdated)
     Q_PROPERTY(bool screenAlwaysOn READ getScreenAlwaysOn WRITE setScreenAlwaysOn NOTIFY screenUpdated)
     Q_PROPERTY(bool screenSecure READ getScreenSecure WRITE setScreenSecure NOTIFY screenUpdated)
-    Q_PROPERTY(bool screenHighRefreshRate READ getHighRefreshRate WRITE setHighRefreshRate NOTIFY screenUpdated)
+    Q_PROPERTY(bool screenHighRefreshRate READ getScreenHighRefreshRate WRITE setScreenHighRefreshRate NOTIFY screenUpdated)
 
     Q_PROPERTY(bool torchEnabled READ getTorchEnabled WRITE setTorchEnabled NOTIFY torchUpdated)
 
@@ -428,7 +430,7 @@ public:
      *
      * You don't usually need to call this function manually, but you can.
      */
-    void refreshScreenOrientation();
+    Q_INVOKABLE void refreshScreenOrientation();
 
     /*!
      * \brief Get screen brightness set for the current app (on Android) or system wide (on iOS).
@@ -436,7 +438,7 @@ public:
      *
      * If brightness has not been set for the current app, this function will return the OS wide brightness level.
      */
-    int getScreenBrightness();
+    int getScreenBrightness() const;
 
     /*!
      * \brief Set screen brightness for the current app (on Android) or system wide (on iOS).
@@ -484,7 +486,7 @@ public:
      * \brief Tell whether a high screen refresh rate has been requested.
      * \return true if the high refresh rate request is active.
      */
-    bool getHighRefreshRate() const { return m_screenHighRefreshRate; }
+    bool getScreenHighRefreshRate() const { return m_screenHighRefreshRate; }
 
     /*!
      * \brief Request (or release) the highest screen refresh rate available.
@@ -497,7 +499,7 @@ public:
      * On iOS you cant opt into ProMotion (120 Hz) at run time, you need an Info.plist key instead:
      * "CADisableMinimumFrameDurationOnPhone" key (set to true)
      */
-    Q_INVOKABLE void setHighRefreshRate(const bool value);
+    Q_INVOKABLE void setScreenHighRefreshRate(const bool value);
 
     // Haptic feedbacks ////////////////////////////////////////////////////////
 

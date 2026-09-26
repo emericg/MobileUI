@@ -507,7 +507,7 @@ void MobileUIPrivate::setScreenSecure(const bool on)
     });
 }
 
-void MobileUIPrivate::setHighRefreshRate(const bool value)
+void MobileUIPrivate::setScreenHighRefreshRate(const bool value)
 {
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
         QJniObject window = getAndroidWindow();

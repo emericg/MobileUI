@@ -64,7 +64,7 @@ public:
 
     void setScreenSecure(const bool on);
 
-    void setHighRefreshRate(const bool value);
+    void setScreenHighRefreshRate(const bool value);
 
     void triggerHapticFeedback(const MobileUI::HapticFeedback type);
 

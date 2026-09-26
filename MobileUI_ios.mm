@@ -290,7 +290,7 @@ void MobileUIPrivate::setScreenAlwaysOn(const bool on)
     }
 }
 
-void MobileUIPrivate::setHighRefreshRate(const bool value)
+void MobileUIPrivate::setScreenHighRefreshRate(const bool value)
 {
     qDebug() << "iOS has no runtime refresh-rate switch. Use the application Info.plist instead.";
     Q_UNUSED(value)

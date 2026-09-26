@@ -189,7 +189,7 @@ void MobileUI::refreshScreenOrientation()
     {
         d->setScreenLockOrientation(m_screenOrientation);
     }
-    }
+}
 
 /* ************************************************************************** */
 
@@ -245,6 +245,12 @@ MobileUI::Theme MobileUI::getStatusbarThemeSet() const
 
 void MobileUI::setStatusbarTheme(const MobileUI::Theme theme)
 {
+    if (!QMetaEnum::fromType<MobileUI::Theme>().valueToKey(theme))
+    {
+        qWarning() << "MobileUI::setStatusbarTheme() ignoring unknown theme:" << theme;
+        return;
+    }
+
     bool changed = (theme != m_statusbarTheme);
     if (!changed) changed = (theme != m_statusbarThemeSet);
 
@@ -371,6 +377,12 @@ MobileUI::Theme MobileUI::getNavbarThemeSet() const
 
 void MobileUI::setNavbarTheme(const MobileUI::Theme theme)
 {
+    if (!QMetaEnum::fromType<MobileUI::Theme>().valueToKey(theme))
+    {
+        qWarning() << "MobileUI::setNavbarTheme() ignoring unknown theme:" << theme;
+        return;
+    }
+
     bool changed = (theme != m_navbarTheme);
     if (!changed) changed = (theme != m_navbarThemeSet);
 
@@ -524,7 +536,7 @@ void MobileUI::refreshKeyboardHeight()
 
 /* ************************************************************************** */
 
-int MobileUI::getScreenBrightness()
+int MobileUI::getScreenBrightness() const
 {
     return d->getScreenBrightness();
 }
@@ -588,12 +600,12 @@ void MobileUI::setScreenAlwaysOn(const bool value)
 
 /* ************************************************************************** */
 
-void MobileUI::setHighRefreshRate(const bool value)
+void MobileUI::setScreenHighRefreshRate(const bool value)
 {
     const bool changed = (value != m_screenHighRefreshRate);
 
     m_screenHighRefreshRate = value;
-    d->setHighRefreshRate(value);
+    d->setScreenHighRefreshRate(value);
 
     if (changed) Q_EMIT screenUpdated();
 }

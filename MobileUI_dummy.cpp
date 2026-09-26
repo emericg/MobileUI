@@ -86,7 +86,7 @@ void MobileUIPrivate::setScreenSecure(const bool on)
     Q_UNUSED(on)
 }
 
-void MobileUIPrivate::setHighRefreshRate(const bool value)
+void MobileUIPrivate::setScreenHighRefreshRate(const bool value)
 {
     Q_UNUSED(value)
 }
