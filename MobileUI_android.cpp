@@ -704,12 +704,15 @@ bool MobileUIPrivate::setTorch(const bool on)
 
     if (!torchCameraId.isValid()) return false;
 
-    cameraManager.callMethod<void>("setTorchMode", "(Ljava/lang/String;Z)V", torchCameraId.object<jstring>(), on);
+    // void setTorchMode() doesn't returns operation status, but may throw CameraAccessException, which we treat that as a failure.
+    // we call it through raw JNI, because QJniObject::callMethod() clears any pending exception internally before we can inspect it.
 
-    // setTorchMode() may throw CameraAccessException; treat that as a failure.
+    jclass cameraManagerClass = env->GetObjectClass(cameraManager.object());
+    jmethodID setTorchMode = env->GetMethodID(cameraManagerClass, "setTorchMode", "(Ljava/lang/String;Z)V");
+    env->CallVoidMethod(cameraManager.object(), setTorchMode, torchCameraId.object<jstring>(), on);
     if (env.checkAndClearExceptions()) return false;
 
-    return on;
+    return true;
 }
 
 /* ************************************************************************** */

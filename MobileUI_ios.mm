@@ -296,7 +296,7 @@ bool MobileUIPrivate::setTorch(const bool on)
     device.torchMode = on ? AVCaptureTorchModeOn : AVCaptureTorchModeOff;
     [device unlockForConfiguration];
 
-    return on;
+    return true;
 }
 
 /* ************************************************************************** */

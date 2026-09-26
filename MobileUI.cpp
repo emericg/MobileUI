@@ -610,13 +610,13 @@ void MobileUI::vibrate(const MobileUI::HapticFeedback type)
 
 void MobileUI::setTorchEnabled(const bool on)
 {
-    // setTorch() returns the resulting state, which may differ from the request
-    const bool result = d->setTorch(on);
-
-    if (result != m_torchEnabled)
+    if (d->setTorch(on))
     {
-        m_torchEnabled = result;
-        Q_EMIT torchUpdated();
+        if (on != m_torchEnabled)
+        {
+            m_torchEnabled = on;
+            Q_EMIT torchUpdated();
+        }
     }
 }
 
