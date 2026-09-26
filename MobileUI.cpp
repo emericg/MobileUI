@@ -27,6 +27,7 @@
 #include <QGuiApplication>
 #include <QStyleHints>
 #include <QInputMethod>
+#include <QMetaEnum>
 #include <QQmlEngine>
 #include <QScreen>
 #include <QWindow>
@@ -84,7 +85,8 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
     }
 
     // The application window doesn't exist yet when this object is created from QML,
-    // so we defer the signal hookup and the first safe area computation until the event loop is running.
+    // so we defer the signal hookup and the first safe area computation (and mostly
+    // everything else too) until the event loop is running.
     QTimer::singleShot(0, this, [this]() {
         // connectSignals() must be called only ONCE
         connectSignals();
@@ -92,6 +94,7 @@ MobileUI::MobileUI(QObject *parent) : QObject(parent)
         refreshSystemBars();
         refreshSafeAreas();
         refreshDeviceTheme();
+        refreshScreenOrientation();
     });
 #endif
 }
@@ -167,8 +170,6 @@ void MobileUI::refreshDeviceTheme()
     }
 }
 
-/* ************************************************************************** */
-
 void MobileUI::refreshSystemBars()
 {
     // colors
@@ -181,6 +182,14 @@ void MobileUI::refreshSystemBars()
     if (m_navbarTheme > MobileUI::Auto) d->setTheme_navbar(m_navbarTheme);
     else if (m_navbarThemeSet > MobileUI::Auto) d->setTheme_navbar(m_navbarThemeSet);
 }
+
+void MobileUI::refreshScreenOrientation()
+{
+    if (m_screenOrientation != MobileUI::Unlocked)
+    {
+        d->setScreenLockOrientation(m_screenOrientation);
+    }
+    }
 
 /* ************************************************************************** */
 
@@ -540,9 +549,15 @@ MobileUI::ScreenLockOrientation MobileUI::getScreenLockOrientation() const
 
 void MobileUI::setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation)
 {
+    if (!QMetaEnum::fromType<MobileUI::ScreenLockOrientation>().valueToKey(orientation))
+    {
+        qWarning() << "MobileUI::setScreenLockOrientation() ignoring unknown orientation:" << orientation;
+        return;
+    }
+
     const bool changed = (orientation != m_screenOrientation);
 
-    // We re-apply, the OS might have changed that on its own
+    // We re-apply anyway, the OS might have changed that on its own
     m_screenOrientation = orientation;
     d->setScreenLockOrientation(orientation);
 

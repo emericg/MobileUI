@@ -84,6 +84,9 @@
 #define SCREEN_ORIENTATION_SENSOR_PORTRAIT      7
 #define SCREEN_ORIENTATION_REVERSE_LANDSCAPE    8
 #define SCREEN_ORIENTATION_REVERSE_PORTRAIT     9
+#define SCREEN_ORIENTATION_USER_LANDSCAPE      11
+#define SCREEN_ORIENTATION_USER_PORTRAIT       12
+#define SCREEN_ORIENTATION_LOCKED              14
 
 // Screen brightness
 #define BRIGHTNESS_OVERRIDE_NONE               -1
@@ -461,7 +464,8 @@ void MobileUIPrivate::setScreenLockOrientation(const MobileUI::ScreenLockOrienta
 {
     int value = SCREEN_ORIENTATION_UNSPECIFIED;
 
-    if (orientation == MobileUI::Portrait) value = SCREEN_ORIENTATION_PORTRAIT;
+    if (orientation == MobileUI::Locked) value = SCREEN_ORIENTATION_LOCKED;
+    else if (orientation == MobileUI::Portrait) value = SCREEN_ORIENTATION_PORTRAIT;
     else if (orientation == MobileUI::Portrait_upsidedown) value = SCREEN_ORIENTATION_REVERSE_PORTRAIT;
     else if (orientation == MobileUI::Portrait_sensor) value = SCREEN_ORIENTATION_SENSOR_PORTRAIT;
     else if (orientation == MobileUI::Landscape_left) value = SCREEN_ORIENTATION_LANDSCAPE;

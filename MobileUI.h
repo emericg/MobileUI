@@ -381,25 +381,26 @@ public:
     /*!
      * \brief Screen orientations that can be locked through setScreenLockOrientation().
      *
-     * The values are bit flags, so a sensor mode is conceptually the union of
-     * its two fixed orientations. These are used to *lock* the orientation;
+     * These are used to *lock* the orientation,
      * they cannot be used to read the device's current physical orientation.
      */
     enum ScreenLockOrientation {
-        Unlocked = 0,                       //!< Orientation is unlocked; the OS decides freely.
+        Unlocked            = 0,    //!< Orientation is unlocked; the OS decides freely.
+        Locked              = 1,    //!< Locked in the orientation in use when the lock is set.
 
-        Portrait            = (1 << 0),     //!< Locked to portrait, right side up.
-        Portrait_upsidedown = (1 << 1),     //!< Locked to portrait, upside down.
-        Portrait_sensor     = (1 << 2),     //!< Both portrait orientations, sensor driven (Android only; falls back to Portrait on iOS).
+        Portrait            = 2,    //!< Locked to portrait.
+        Portrait_upsidedown = 3,    //!< Locked to portrait, upside down.
+        Portrait_sensor     = 4,    //!< Both portrait orientations, sensor driven (but many devices won't do upside-down).
 
-        Landscape_left      = (1 << 3),     //!< Locked to landscape left.
-        Landscape_right     = (1 << 4),     //!< Locked to landscape right.
-        Landscape_sensor    = (1 << 5),     //!< Both landscape orientations, sensor driven (Android only; falls back to Landscape on iOS).
+        Landscape_left      = 5,    //!< Locked to landscape left.
+        Landscape_right     = 6,    //!< Locked to landscape right.
+        Landscape_sensor    = 7,    //!< Both landscape orientations, sensor driven.
     };
     Q_ENUM(ScreenLockOrientation)
 
     /*!
      * \brief Get orientation lock (if set).
+     * \note Read the screen lock, NOT the screen orientation.
      * \return See MobileUI::ScreenLockOrientation enum.
      */
     MobileUI::ScreenLockOrientation getScreenLockOrientation() const;
@@ -407,15 +408,27 @@ public:
     /*!
      * \brief Lock (or unlock) the screen orientation.
      * \param orientation: see MobileUI::ScreenLockOrientation enum.
-     * \note - On iOS the sensor modes are approximated: Landscape_sensor allows both landscape orientations,
-     *         while Portrait_sensor falls back to a fixed Portrait.
-     *       - Forcing orientation is also not allowed on iPads.
+     * \note - On iOS, Face ID iPhones never rotate upside-down, so Portrait_sensor behaves like Portrait there.
+     *       - On iOS, the orientations must also be allowed by the application Info.plist.
+     *       - On iPads with multitasking enabled the lock is ignored, unless UIRequiresFullScreen is set.
+     *       - On Android 16+, apps targeting API level 36 have the lock ignored on large screens
+     *         (smallest width of 600dp or more, like tablets and unfolded foldables).
      *
      * You can also achieve similar functionality through application manifest or plist:
      * - https://developer.android.com/guide/topics/manifest/activity-element.html#screen
      * - https://developer.apple.com/documentation/bundleresources/information_property_list/uisupportedinterfaceorientations
      */
     Q_INVOKABLE void setScreenLockOrientation(const MobileUI::ScreenLockOrientation orientation);
+
+    /*!
+     * \brief Re-apply the screen orientation lock.
+     *
+     * An orientation lock set before the window is available would be ignored but recorded as set on iOS,
+     * so re-apply it with other refresh*() calls from the MobileUI() constructor initial singleShot timer.
+     *
+     * You don't usually need to call this function manually, but you can.
+     */
+    void refreshScreenOrientation();
 
     /*!
      * \brief Get screen brightness set for the current app (on Android) or system wide (on iOS).
